@@ -1,0 +1,25 @@
+appId: com.focuslock.app
+productName: FocusLock
+directories:
+  buildResources: build
+files:
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!scripts/*'
+  - '!build/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+  - '!{.prettierignore,.prettierrc,.eslintrc.cjs,CHANGELOG.md,README.md}'
+  - '!{install.log,electron-builder.yml}'
+win:
+  icon: build/icon.png
+  target:
+    - nsis
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+  shortcutName: FocusLock
+  uninstallDisplayName: FocusLock
+  artifactName: ${productName}-${version}-setup.${ext}
