@@ -49,12 +49,39 @@ const MODES: { key: BlockMode; label: string }[] = [
   { key: 'budget', label: 'Limit' }
 ]
 
-const CHALLENGE_TYPES: { key: ChallengeType; label: string }[] = [
-  { key: 'words', label: 'Random words' },
-  { key: 'chars', label: 'Characters' },
-  { key: 'custom', label: 'Custom text' },
-  { key: 'timer', label: 'Timer' }
+const CHALLENGE_TYPES: { key: ChallengeType; label: string; desc: string }[] = [
+  {
+    key: 'words',
+    label: 'Random words',
+    desc: 'A set of random everyday words of mixed length — type them out exactly to unlock.'
+  },
+  {
+    key: 'chars',
+    label: 'Characters',
+    desc: 'A random string of letters and numbers. Slower and more foolproof than words.'
+  },
+  {
+    key: 'custom',
+    label: 'Custom text',
+    desc: 'Your own mantra or statement — set it once, then type it exactly to unlock.'
+  },
+  {
+    key: 'timer',
+    label: 'Timer',
+    desc: 'A countdown, no typing. The block holds until the timer runs out.'
+  }
 ]
+
+// Rough time-to-complete estimates so the count means something. Real, mixed-length words
+// type faster than random character strings (you can read a word; you must check each char).
+const SECS_PER_WORD = 1.3
+const SECS_PER_CHAR = 0.45
+
+function estimateLabel(seconds: number): string {
+  if (seconds < 60) return `~${Math.max(5, Math.round(seconds / 5) * 5)} sec`
+  const half = Math.round((seconds / 60) * 2) / 2
+  return `~${Number.isInteger(half) ? half : half.toFixed(1)} min`
+}
 
 // Render days Monday-first to match the design, mapping back to JS day indices.
 const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0]
@@ -164,8 +191,8 @@ export default function App(): JSX.Element {
 
   // Challenge config drafts
   const [chType, setChType] = useState<ChallengeType>('words')
-  const [chLen, setChLen] = useState(250)
-  const [chWords, setChWords] = useState(40)
+  const [chLen, setChLen] = useState(400)
+  const [chWords, setChWords] = useState(140)
   const [chCustom, setChCustom] = useState('')
   const [chTimer, setChTimer] = useState(5)
 
@@ -461,15 +488,15 @@ export default function App(): JSX.Element {
   }, [protectedCall, refresh, flash])
 
   const previewUnlock = useCallback(async () => {
+    setLockoutPreview(false) // close the takeover first, else the challenge renders behind it
     const c = await window.api.startChallenge()
     await runChallenge(c, 'Unlocking anyway')
-    setLockoutPreview(false)
   }, [runChallenge])
 
   const unlockBlocked = useCallback(async () => {
+    setBlockedApp(null) // close the takeover first, else the challenge renders behind it
     const c = await window.api.startChallenge()
     await runChallenge(c, 'Unlocking anyway')
-    setBlockedApp(null)
   }, [runChallenge])
 
   useEffect(() => window.api.onQuitRequested(() => void quit()), [quit])
@@ -1248,7 +1275,7 @@ export default function App(): JSX.Element {
         <div className="card">
           <div className="card-title">Unlock challenge</div>
           <p className="card-help">
-            What you must type to weaken a block while it’s enforcing. Friction is the feature.
+            What you have to complete to unlock a block while it’s active. Friction is the feature.
           </p>
           <div className="seg" style={{ marginTop: 12 }}>
             {CHALLENGE_TYPES.map((t) => (
@@ -1262,6 +1289,10 @@ export default function App(): JSX.Element {
             ))}
           </div>
 
+          <p className="card-help" style={{ marginTop: 12 }}>
+            {CHALLENGE_TYPES.find((t) => t.key === chType)?.desc}
+          </p>
+
           {chType === 'words' && (
             <div className="inline-row">
               <input
@@ -1272,7 +1303,9 @@ export default function App(): JSX.Element {
                 value={chWords}
                 onChange={(e) => setChWords(Number(e.target.value))}
               />
-              <span className="inline-label">random words to type</span>
+              <span className="inline-label">
+                random words to type · {estimateLabel((chWords || 0) * SECS_PER_WORD)}
+              </span>
             </div>
           )}
           {chType === 'chars' && (
@@ -1285,14 +1318,16 @@ export default function App(): JSX.Element {
                 value={chLen}
                 onChange={(e) => setChLen(Number(e.target.value))}
               />
-              <span className="inline-label">characters to type</span>
+              <span className="inline-label">
+                characters to type · {estimateLabel((chLen || 0) * SECS_PER_CHAR)}
+              </span>
             </div>
           )}
           {chType === 'custom' && (
             <textarea
               className="field"
               style={{ marginTop: 12 }}
-              placeholder="e.g. I am choosing to game as a healthy break, not an escape from what I should be doing."
+              placeholder="I understand that unlocking this block will break my streak, and I believe I’m acting in my highest good right now — not giving in to my old habits."
               value={chCustom}
               onChange={(e) => setChCustom(e.target.value)}
             />
@@ -1633,6 +1668,7 @@ export default function App(): JSX.Element {
 
       {blockedApp && (
         <Lockout
+          key={blockedApp}
           appName={blockedApp}
           streak={streak}
           onClose={() => setBlockedApp(null)}

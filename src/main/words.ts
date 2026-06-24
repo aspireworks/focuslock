@@ -19,5 +19,24 @@ export const WORDS: string[] = [
   'mint', 'sage', 'pine', 'palm', 'fern', 'rose', 'iris', 'corn', 'kale', 'plum',
   'gold', 'iron', 'clay', 'silk', 'wool', 'jade', 'opal', 'ruby', 'coal', 'mist',
   'calm', 'kind', 'warm', 'cool', 'soft', 'bold', 'keen', 'wise', 'pure', 'free',
-  'open', 'tall', 'wide', 'deep', 'high', 'fast', 'slow', 'near', 'true', 'real'
+  'open', 'tall', 'wide', 'deep', 'high', 'fast', 'slow', 'near', 'true', 'real',
+
+  // Longer words (6–13 letters) mixed in for length variety — still common and easy to spell.
+  'garden', 'planet', 'silver', 'forest', 'breeze', 'summer', 'winter', 'basket', 'castle', 'bridge',
+  'copper', 'velvet', 'anchor', 'signal', 'tunnel', 'guitar', 'candle', 'pillow', 'rocket', 'orange',
+  'purple', 'dragon', 'island', 'jungle', 'flower', 'cherry', 'coffee', 'friend', 'jacket', 'ladder',
+  'market', 'pocket', 'ribbon', 'ticket', 'wallet', 'window', 'yellow', 'pepper', 'napkin', 'saddle',
+  'journey', 'harvest', 'crystal', 'lantern', 'compass', 'freedom', 'gravity', 'horizon', 'kingdom', 'library',
+  'machine', 'network', 'picture', 'station', 'weather', 'balance', 'captain', 'diamond', 'blanket', 'chicken',
+  'country', 'evening', 'holiday', 'kitchen', 'leopard', 'monster', 'octopus', 'popcorn', 'rainbow', 'soldier',
+  'teacher', 'village', 'whisper', 'cabinet', 'gateway',
+  'mountain', 'sunshine', 'elephant', 'hospital', 'mushroom', 'daughter', 'building', 'calendar', 'dinosaur', 'envelope',
+  'festival', 'hardware', 'keyboard', 'language', 'notebook', 'sandwich', 'treasure', 'umbrella', 'vacation', 'schedule',
+  'airplane', 'baseball', 'birthday', 'campfire', 'doorbell', 'exercise', 'flamingo', 'scissors', 'snowball', 'tomorrow',
+  'adventure', 'butterfly', 'chocolate', 'community', 'education', 'furniture', 'important', 'landscape', 'orchestra', 'paragraph',
+  'raspberry', 'telescope', 'vegetable', 'waterfall', 'wonderful', 'alligator', 'breakfast', 'crocodile', 'detective', 'fireplace',
+  'hurricane', 'invisible', 'lightning', 'parachute', 'pineapple', 'starlight', 'submarine', 'xylophone',
+  'basketball', 'comfortable', 'connection', 'foundation', 'generation', 'helicopter', 'motivation', 'reflection', 'technology', 'university',
+  'watermelon', 'strawberry', 'playground', 'friendship', 'restaurant', 'understand', 'wilderness', 'blackberry', 'grasshopper', 'caterpillar',
+  'lighthouse', 'conversation', 'independence', 'opportunity', 'celebration', 'imagination', 'information', 'temperature', 'architecture', 'establishment'
 ]

@@ -37,7 +37,7 @@ const S: AppState = {
       '4': [{ start: '09:00', end: '17:00' }],
       '5': [{ start: '09:00', end: '17:00' }]
     },
-    challenge: { type: 'words', length: 250, wordCount: 12, customText: '', timerMinutes: 5 },
+    challenge: { type: 'words', length: 400, wordCount: 140, customText: '', timerMinutes: 5 },
     panic: {
       minutes: 5,
       mantra: "This urge is temporary. What I'm building is not.",

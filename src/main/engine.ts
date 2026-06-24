@@ -53,27 +53,40 @@ function notify(title: string, body: string): void {
   }
 }
 
-// Optional hook: fired (debounced, and never during panic) when a blocked app is caught,
-// so the main process can surface the full-screen lockout takeover in the renderer.
+// Optional hook: fired when a blocked app is caught, so the main process can surface
+// the full-screen lockout takeover in the renderer.
 let appBlockedListener: ((name: string) => void) | null = null
 export function setOnAppBlocked(cb: (name: string) => void): void {
   appBlockedListener = cb
 }
 
-// One "block event" per app per minute — so relaunch spam doesn't inflate stats or notifications.
+// Stats + toast fire at most once per app per minute, so relaunch spam doesn't inflate
+// them. The takeover is separate: it's "armed" per app and re-armed in tick() once the app
+// is seen gone (see the re-arm branch below), so it pops once per genuine launch — not on
+// every 1.5s poll, and not suppressed for a full minute after the user relaunches.
 const lastBlockEvent: Record<string, number> = {}
 const BLOCK_EVENT_COOLDOWN = 60_000
+const lockoutArmed: Record<string, boolean> = {}
+
 function onBlocked(name: string): void {
   const key = name.toLowerCase()
   const now = Date.now()
+
+  // Full-screen takeover — once per launch episode, and never during panic (its overlay
+  // already covers the screen). Disarmed here; re-armed in tick() when the app is gone.
+  if (!isPanicActive() && lockoutArmed[key] !== false) {
+    lockoutArmed[key] = false
+    appBlockedListener?.(name)
+  }
+
+  // Stats + toast — throttled to once per app per minute.
   if (now - (lastBlockEvent[key] ?? 0) < BLOCK_EVENT_COOLDOWN) return
   lastBlockEvent[key] = now
-  recordBlock(name) // always counts toward progress stats
+  recordBlock(name) // counts toward progress stats (even during panic)
   if (isPanicActive()) return // ...but skip the toast during panic (the overlay covers it)
   const cfg = getConfig()
   const title = cfg.userName ? `Sorry ${cfg.userName} — ${name} is blocked` : `${name} is blocked`
   notify(title, cfg.blockMessage || 'Back to what matters.')
-  appBlockedListener?.(name) // pop the lockout takeover (same debounce/panic rules as the toast)
 }
 
 function todayStr(): string {
@@ -328,6 +341,9 @@ async function tick(): Promise<void> {
     } else if (pids && pids.length > 0) {
       // Running but allowed right now — track the time spent (the insight: usage outside block hours).
       recordRuntime(appCfg.name, POLL_SECONDS)
+    } else {
+      // App isn't running — re-arm its takeover so the next genuine launch pops it again.
+      lockoutArmed[key] = true
     }
   }
 

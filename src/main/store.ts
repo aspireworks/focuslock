@@ -85,7 +85,8 @@ const DEFAULT_CONFIG: Config = {
   onboardingComplete: false,
   scheduleEnabled: true,
   schedule: {},
-  challenge: { type: 'words', length: 250, wordCount: 40, customText: '', timerMinutes: 5 },
+  // Word/char counts are tuned to ~3 minutes of typing; the timer default is 5 minutes.
+  challenge: { type: 'words', length: 400, wordCount: 140, customText: '', timerMinutes: 5 },
   panic: { minutes: 5, mantra: DEFAULT_MANTRA, blockBrowsers: true }
 }
 
