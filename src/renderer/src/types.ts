@@ -41,6 +41,7 @@ export interface Config {
   protectionEnabled: boolean
   blockMessage: string
   userName: string
+  dailyGamingHours: number
   onboardingComplete: boolean
   scheduleEnabled: boolean
   schedule: Schedule

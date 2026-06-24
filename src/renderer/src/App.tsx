@@ -568,7 +568,9 @@ export default function App(): JSX.Element {
   const blockMsgDirty = blockMsg !== config.blockMessage
   const chartMax = Math.max(1, ...stats.last7.map((d) => d.count))
   const streak = stats.daysSinceStart
-  const reclaimedHours = stats.weekRuntime.reduce((sum, a) => sum + a.seconds, 0) / 3600
+  // Estimated hours won back: days on the streak × the user's self-reported daily gaming hours
+  // (captured during onboarding). 0 when they skipped that step.
+  const reclaimedHours = streak * config.dailyGamingHours
 
   const enforcing =
     !paused &&

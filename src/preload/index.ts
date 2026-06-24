@@ -16,6 +16,7 @@ const api = {
   sendFeedback: () => ipcRenderer.invoke('send-feedback'),
   completeOnboarding: (payload: {
     name: string
+    dailyGamingHours: number
     apps: string[]
     mode: string
     sites: string[]

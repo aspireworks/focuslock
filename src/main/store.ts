@@ -61,6 +61,8 @@ export interface Config {
   blockMessage: string
   /** For light personalization (greeting, block messages). */
   userName: string
+  /** Self-reported hours/day spent on games before FocusLock. Powers the "time reclaimed" estimate. 0 = not provided/skipped. */
+  dailyGamingHours: number
   /** False until the first-run onboarding wizard is finished. */
   onboardingComplete: boolean
   scheduleEnabled: boolean
@@ -79,6 +81,7 @@ const DEFAULT_CONFIG: Config = {
   protectionEnabled: false,
   blockMessage: 'Back to what matters. You’ve got this.',
   userName: '',
+  dailyGamingHours: 0,
   onboardingComplete: false,
   scheduleEnabled: true,
   schedule: {},
@@ -141,6 +144,7 @@ function migrate(raw: unknown): Config {
     protectionEnabled: r.protectionEnabled === true,
     blockMessage: typeof r.blockMessage === 'string' ? r.blockMessage : base.blockMessage,
     userName: typeof r.userName === 'string' ? r.userName : '',
+    dailyGamingHours: Math.max(0, Math.min(24, Number(r.dailyGamingHours) || 0)),
     onboardingComplete: r.onboardingComplete === true,
     scheduleEnabled: typeof r.scheduleEnabled === 'boolean' ? r.scheduleEnabled : base.scheduleEnabled,
     schedule:

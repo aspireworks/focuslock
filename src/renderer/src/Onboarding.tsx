@@ -22,11 +22,13 @@ const SITE_SUGGESTIONS = [
   'twitch.tv'
 ]
 
-const TOTAL = 6
+const TOTAL = 7
 
 export function Onboarding({ onDone }: Props): JSX.Element {
   const [step, setStep] = useState(0)
   const [name, setName] = useState('')
+  const [gamingHours, setGamingHours] = useState(2)
+  const [hoursSet, setHoursSet] = useState(false)
   const [games, setGames] = useState<GameRow[] | null>(null)
   const [apps, setApps] = useState<Set<string>>(new Set())
   const [mode, setMode] = useState<'always' | 'schedule'>('always')
@@ -35,7 +37,7 @@ export function Onboarding({ onDone }: Props): JSX.Element {
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
-    if (step === 2 && games === null) {
+    if (step === 3 && games === null) {
       void window.api.detectGames().then((g) => {
         const rows = g as GameRow[]
         setGames(rows)
@@ -67,6 +69,7 @@ export function Onboarding({ onDone }: Props): JSX.Element {
     setBusy(true)
     await window.api.completeOnboarding({
       name: name.trim(),
+      dailyGamingHours: hoursSet ? gamingHours : 0,
       apps: [...apps],
       mode,
       sites: [...sites]
@@ -75,6 +78,10 @@ export function Onboarding({ onDone }: Props): JSX.Element {
   }
 
   const who = name.trim() || 'friend'
+  const hoursLabel =
+    gamingHours === 1
+      ? '1 hour'
+      : `${gamingHours % 1 === 0 ? gamingHours : gamingHours.toFixed(1)} hours`
   const detected = games ? games.filter((g) => g.detected) : []
   const customSites = [...sites].filter((s) => !SITE_SUGGESTIONS.includes(s))
 
@@ -137,6 +144,64 @@ export function Onboarding({ onDone }: Props): JSX.Element {
 
         {step === 2 && (
           <div className="onb-step">
+            <h2>One quick question, {who}.</h2>
+            <p>
+              Roughly how many hours a day do you spend on games right now? A rough guess is
+              perfect — I’ll use it to show you how much time you’re winning back as your streak
+              grows.
+            </p>
+            <div className="onb-slider-wrap">
+              <div className="onb-slider-value">
+                {hoursLabel}
+                <span className="onb-slider-unit"> / day</span>
+              </div>
+              <input
+                className="onb-slider"
+                type="range"
+                min={0}
+                max={12}
+                step={0.5}
+                value={gamingHours}
+                onChange={(e) => {
+                  setGamingHours(Number(e.target.value))
+                  setHoursSet(true)
+                }}
+              />
+              <div className="onb-slider-scale">
+                <span>0h</span>
+                <span>6h</span>
+                <span>12h+</span>
+              </div>
+            </div>
+            <p className="muted">No judgment here — this is just your starting line.</p>
+            <div className="onb-actions">
+              <button className="btn ghost" onClick={back}>
+                Back
+              </button>
+              <button
+                className="btn ghost"
+                onClick={() => {
+                  setHoursSet(false)
+                  next()
+                }}
+              >
+                Skip
+              </button>
+              <button
+                className="btn accent"
+                onClick={() => {
+                  setHoursSet(true)
+                  next()
+                }}
+              >
+                Continue →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="onb-step">
             <h2>Nice to meet you, {who}.</h2>
             <p>
               Let’s see what we’re working with. Here’s what I found installed or running on your
@@ -173,7 +238,7 @@ export function Onboarding({ onDone }: Props): JSX.Element {
           </div>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <div className="onb-step">
             <h2>How far do you want to go, {who}?</h2>
             <p>
@@ -209,7 +274,7 @@ export function Onboarding({ onDone }: Props): JSX.Element {
           </div>
         )}
 
-        {step === 4 && (
+        {step === 5 && (
           <div className="onb-step">
             <h2>What about the web?</h2>
             <p>
@@ -261,7 +326,7 @@ export function Onboarding({ onDone }: Props): JSX.Element {
           </div>
         )}
 
-        {step === 5 && (
+        {step === 6 && (
           <div className="onb-step">
             <div className="onb-emoji">💪</div>
             <h2>That’s it, {who}. You’re set.</h2>

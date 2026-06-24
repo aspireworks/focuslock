@@ -107,10 +107,11 @@ export function registerIpc(): void {
     'complete-onboarding',
     async (
       _e,
-      p: { name?: string; apps?: string[]; mode?: string; sites?: string[] }
+      p: { name?: string; dailyGamingHours?: number; apps?: string[]; mode?: string; sites?: string[] }
     ): Promise<ProtectedResult> => {
       const cfg = getConfig()
       const name = String(p?.name ?? '').trim().slice(0, 40)
+      const dailyGamingHours = Math.max(0, Math.min(24, Number(p?.dailyGamingHours) || 0))
       const mode: BlockMode = p?.mode === 'schedule' ? 'schedule' : 'always'
 
       const existing = new Set(cfg.blocklist.map((a) => a.name.toLowerCase()))
@@ -146,6 +147,7 @@ export function registerIpc(): void {
 
       updateConfig({
         userName: name,
+        dailyGamingHours,
         blocklist,
         schedule,
         scheduleEnabled,
