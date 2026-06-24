@@ -481,11 +481,26 @@ input[type='time'].field {
   place-items: center;
   width: 32px;
   height: 32px;
+  padding: 0;
+  border: 2px solid transparent;
   border-radius: 50%;
   background: linear-gradient(135deg, #404659, #262b3a);
   color: #fff;
   font-weight: 700;
   font-size: 13px;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    transform 0.1s ease;
+}
+.avatar:hover {
+  border-color: rgba(123, 123, 255, 0.55);
+}
+.avatar.active {
+  border-color: var(--accent-solid);
+}
+.avatar:active {
+  transform: scale(0.94);
 }
 
 /* ---- Content ---- */
@@ -626,6 +641,14 @@ input[type='time'].field {
   font-size: 12px;
   color: #9aa0b0;
   margin-top: 4px;
+}
+.streak-best {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-text);
+  opacity: 0.82;
+  letter-spacing: 0.02em;
+  margin-top: 6px;
 }
 
 /* Stat tiles */
@@ -1076,6 +1099,13 @@ input[type='time'].field {
   font-size: 13px;
   color: #9aa0b0;
   margin-top: 6px;
+}
+.streak-hero-best {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-text);
+  opacity: 0.9;
+  margin-top: 10px;
 }
 .streak-hero-right {
   flex: 1;

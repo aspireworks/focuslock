@@ -27,6 +27,7 @@ const S: AppState = {
     protectionEnabled: true,
     blockMessage: "Blocked. You've got this.",
     userName: 'Marcus',
+    dailyGamingHours: 3,
     onboardingComplete: true,
     scheduleEnabled: true,
     schedule: {
@@ -55,6 +56,8 @@ const S: AppState = {
   stats: {
     startDate: '2026-06-11',
     daysSinceStart: 12,
+    currentStreak: 12,
+    bestStreak: 21,
     totalBlocks: 218,
     weekTotal: 34,
     last7: [
@@ -103,6 +106,10 @@ const mock = {
   setBlockMessage: async (t: string) => {
     S.config.blockMessage = t
     return ok()
+  },
+  setName: async (name: string) => {
+    S.config.userName = name.trim().slice(0, 40)
+    return S.config
   },
   openLogs: async () => ok(),
   sendFeedback: async () => ok(),

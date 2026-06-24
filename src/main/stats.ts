@@ -9,11 +9,19 @@ interface Stats {
   byDay: Record<string, number>
   /** date -> appName -> seconds the app actually ran while it was *allowed* to. */
   runtime: Record<string, Record<string, number>>
+  /** Set of day keys broken by a deliberate pause/disable of protection. */
+  lapseDays: Record<string, 1>
+  /** All-time longest clean streak. Persisted as a running max so pruning can't erase it. */
+  bestStreak: number
 }
 
 export interface StatsView {
   startDate: string
   daysSinceStart: number
+  /** Consecutive clean (fully-protected, no-gaming) days ending today. 0 if today is a lapse. */
+  currentStreak: number
+  /** Longest clean streak ever reached. */
+  bestStreak: number
   totalBlocks: number
   weekTotal: number
   last7: { date: string; count: number }[]
@@ -21,12 +29,27 @@ export interface StatsView {
   weekRuntime: { name: string; seconds: number }[]
 }
 
+/**
+ * A blocked app running under this many seconds in a day is noise (launched then
+ * killed, an incidental background tick) — not a real gaming session. At or above
+ * it, the day counts as a lapse and breaks the streak.
+ */
+const RUNTIME_LAPSE_THRESHOLD_SEC = 60
+
 const pad = (n: number): string => String(n).padStart(2, '0')
 const dayKey = (d: Date): string => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 const today = (): string => dayKey(new Date())
 
 let statsPath = ''
-let stats: Stats = { startDate: '', totalBlocks: 0, byApp: {}, byDay: {}, runtime: {} }
+let stats: Stats = {
+  startDate: '',
+  totalBlocks: 0,
+  byApp: {},
+  byDay: {},
+  runtime: {},
+  lapseDays: {},
+  bestStreak: 0
+}
 let runtimeWrites = 0
 
 function persist(): void {
@@ -44,6 +67,7 @@ function prune(): void {
   const cut = dayKey(cutoff)
   for (const k of Object.keys(stats.byDay)) if (k < cut) delete stats.byDay[k]
   for (const k of Object.keys(stats.runtime)) if (k < cut) delete stats.runtime[k]
+  for (const k of Object.keys(stats.lapseDays)) if (k < cut) delete stats.lapseDays[k]
 }
 
 export function initStats(): void {
@@ -58,7 +82,9 @@ export function initStats(): void {
         totalBlocks: Number(r.totalBlocks) || 0,
         byApp: r.byApp && typeof r.byApp === 'object' ? r.byApp : {},
         byDay: r.byDay && typeof r.byDay === 'object' ? r.byDay : {},
-        runtime: r.runtime && typeof r.runtime === 'object' ? r.runtime : {}
+        runtime: r.runtime && typeof r.runtime === 'object' ? r.runtime : {},
+        lapseDays: r.lapseDays && typeof r.lapseDays === 'object' ? r.lapseDays : {},
+        bestStreak: Number(r.bestStreak) || 0
       }
     }
   } catch (e) {
@@ -95,9 +121,60 @@ export function flushStats(): void {
   persist()
 }
 
+/**
+ * Mark today as a lapse — a deliberate pause or disable of protection. Breaks the
+ * current streak for the day (resuming later doesn't un-taint it: the strict rule
+ * is a fully-protected day). Idempotent within a day.
+ */
+export function recordLapse(): void {
+  const d = today()
+  if (stats.lapseDays[d]) return
+  stats.lapseDays[d] = 1
+  persist()
+}
+
+/** Total allowed-runtime (seconds) across all blocked apps on a given day. */
+function dayRuntimeSeconds(dayK: string): number {
+  const rt = stats.runtime[dayK]
+  if (!rt) return 0
+  let sum = 0
+  for (const s of Object.values(rt)) sum += s
+  return sum
+}
+
+/** A day breaks the streak if protection was paused/disabled OR a blocked game actually ran. */
+function isLapseDay(dayK: string): boolean {
+  return stats.lapseDays[dayK] === 1 || dayRuntimeSeconds(dayK) >= RUNTIME_LAPSE_THRESHOLD_SEC
+}
+
+/**
+ * Current streak = consecutive clean days ending today; best = the all-time max,
+ * persisted so it survives the 90-day pruning of the day buckets. (A clean run
+ * longer than the retention window can under-count `current` if a lapse just before
+ * the window was pruned — an acceptable edge for a 90+ day streak.)
+ */
+function computeStreak(): { current: number; best: number } {
+  const start = stats.startDate
+  let current = 0
+  const cursor = new Date()
+  for (;;) {
+    const k = dayKey(cursor)
+    if (k < start) break // never count days before the user started
+    if (isLapseDay(k)) break
+    current++
+    cursor.setDate(cursor.getDate() - 1)
+  }
+  if (current > stats.bestStreak) {
+    stats.bestStreak = current
+    persist()
+  }
+  return { current, best: stats.bestStreak }
+}
+
 export function getStats(): StatsView {
   const start = new Date(stats.startDate + 'T00:00:00')
   const daysSinceStart = Math.max(1, Math.floor((Date.now() - start.getTime()) / 86_400_000) + 1)
+  const { current: currentStreak, best: bestStreak } = computeStreak()
 
   const last7: { date: string; count: number }[] = []
   let weekTotal = 0
@@ -123,5 +200,15 @@ export function getStats(): StatsView {
     .sort((a, b) => b.seconds - a.seconds)
     .slice(0, 6)
 
-  return { startDate: stats.startDate, daysSinceStart, totalBlocks: stats.totalBlocks, weekTotal, last7, topApps, weekRuntime }
+  return {
+    startDate: stats.startDate,
+    daysSinceStart,
+    currentStreak,
+    bestStreak,
+    totalBlocks: stats.totalBlocks,
+    weekTotal,
+    last7,
+    topApps,
+    weekRuntime
+  }
 }

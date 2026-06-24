@@ -68,6 +68,10 @@ export interface Usage {
 export interface StatsView {
   startDate: string
   daysSinceStart: number
+  /** Consecutive clean (fully-protected, no-gaming) days ending today. 0 if today is a lapse. */
+  currentStreak: number
+  /** Longest clean streak ever reached. */
+  bestStreak: number
   totalBlocks: number
   weekTotal: number
   last7: { date: string; count: number }[]

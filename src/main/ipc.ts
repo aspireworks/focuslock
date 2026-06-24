@@ -1,6 +1,6 @@
 import { app, dialog, ipcMain, shell } from 'electron'
 import { getLogsDir } from './logger'
-import { getStats } from './stats'
+import { getStats, recordLapse } from './stats'
 
 // Where the in-app "Send feedback" button addresses email. Change to your preferred inbox.
 const FEEDBACK_EMAIL = 'connor.d@mindmaven.com'
@@ -99,6 +99,11 @@ export function registerIpc(): void {
 
   ipcMain.handle('set-block-message', (_e, text: string) => {
     updateConfig({ blockMessage: String(text).slice(0, 200) })
+    return getConfig()
+  })
+
+  ipcMain.handle('set-name', (_e, name: string) => {
+    updateConfig({ userName: String(name).trim().slice(0, 40) })
     return getConfig()
   })
 
@@ -211,6 +216,7 @@ export function registerIpc(): void {
 
   // ---- Dev override (intentionally NOT challenge-gated) ----
   ipcMain.handle('set-paused', (_e, value: boolean) => {
+    if (value) recordLapse() // pausing opens a gaming window — today is no longer a clean day
     setPaused(Boolean(value))
     return { ok: true, paused: isPaused() }
   })
@@ -220,6 +226,7 @@ export function registerIpc(): void {
     const cfg = getConfig()
     const turningOff = cfg.protectionEnabled && !enabled
     if (turningOff && (isPanicActive() || !isValidToken(token))) return fail()
+    if (turningOff) recordLapse() // dropping protection taints today's streak
     updateConfig({ protectionEnabled: !!enabled })
     applyAutostart(!!enabled)
     if (enabled) startWatchdog()

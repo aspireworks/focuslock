@@ -12,6 +12,7 @@ const api = {
   setProtection: (enabled: boolean, token?: string) =>
     ipcRenderer.invoke('set-protection', enabled, token),
   setBlockMessage: (text: string) => ipcRenderer.invoke('set-block-message', text),
+  setName: (name: string) => ipcRenderer.invoke('set-name', name),
   openLogs: () => ipcRenderer.invoke('open-logs'),
   sendFeedback: () => ipcRenderer.invoke('send-feedback'),
   completeOnboarding: (payload: {

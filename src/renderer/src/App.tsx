@@ -173,6 +173,7 @@ export default function App(): JSX.Element {
   const [panicMantra, setPanicMantra] = useState('')
   const [panicBrowsers, setPanicBrowsers] = useState(true)
   const [blockMsg, setBlockMsg] = useState('')
+  const [nameInput, setNameInput] = useState('')
 
   // Challenge modal
   const [challenge, setChallenge] = useState<
@@ -232,6 +233,7 @@ export default function App(): JSX.Element {
       setPanicMantra(state.config.panic.mantra)
       setPanicBrowsers(state.config.panic.blockBrowsers)
       setBlockMsg(state.config.blockMessage)
+      setNameInput(state.config.userName)
     }
   }, [state, draft])
 
@@ -438,6 +440,12 @@ export default function App(): JSX.Element {
     flash('Block message saved.')
   }, [blockMsg, refresh, flash])
 
+  const saveName = useCallback(async () => {
+    await window.api.setName(nameInput)
+    await refresh()
+    flash('Name saved.')
+  }, [nameInput, refresh, flash])
+
   const toggleProtection = useCallback(async () => {
     if (stateRef.current?.config.protectionEnabled) {
       await protectedCall(
@@ -566,11 +574,14 @@ export default function App(): JSX.Element {
   const { status, config, killLog, paused, version, stats } = state
   const blockedSet = new Set(config.blocklist.map((a) => a.name.toLowerCase()))
   const blockMsgDirty = blockMsg !== config.blockMessage
+  const nameDirty = nameInput.trim() !== config.userName && nameInput.trim().length > 0
   const chartMax = Math.max(1, ...stats.last7.map((d) => d.count))
-  const streak = stats.daysSinceStart
-  // Estimated hours won back: days on the streak × the user's self-reported daily gaming hours
-  // (captured during onboarding). 0 when they skipped that step.
-  const reclaimedHours = streak * config.dailyGamingHours
+  const streak = stats.currentStreak
+  const bestStreak = stats.bestStreak
+  // Estimated hours won back: total days since start × the user's self-reported daily gaming
+  // hours (captured during onboarding). Cumulative — it doesn't reset when a streak breaks.
+  // 0 when they skipped the onboarding step.
+  const reclaimedHours = stats.daysSinceStart * config.dailyGamingHours
 
   const enforcing =
     !paused &&
@@ -641,6 +652,13 @@ export default function App(): JSX.Element {
                 {streak} <span style={{ fontSize: '28px' }}>🔥</span>
               </div>
               <div className="streak-cap">day streak</div>
+              {bestStreak > 0 && (
+                <div className="streak-best">
+                  {streak >= bestStreak
+                    ? '🏆 personal best'
+                    : `best ${bestStreak} ${bestStreak === 1 ? 'day' : 'days'}`}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -1097,6 +1115,11 @@ export default function App(): JSX.Element {
               {streak} <span style={{ fontSize: '34px' }}>🔥</span>
             </div>
             <div className="streak-hero-cap">day streak</div>
+            <div className="streak-hero-best">
+              {streak >= bestStreak
+                ? '🏆 personal best'
+                : `Best: ${bestStreak} ${bestStreak === 1 ? 'day' : 'days'}`}
+            </div>
           </div>
           <div className="streak-hero-right">
             <div className="milestone-title">Next milestone: {milestone}-day streak</div>
@@ -1162,7 +1185,8 @@ export default function App(): JSX.Element {
             </div>
             <div className="badge-grid">
               {BADGES.map((bd) => {
-                const earned = streak >= bd.need
+                const earned = bestStreak >= bd.need
+                const toGo = Math.max(1, bd.need - streak)
                 return (
                   <div
                     key={bd.name}
@@ -1171,7 +1195,7 @@ export default function App(): JSX.Element {
                     <div className="badge-emoji">{bd.emoji}</div>
                     <div className="badge-name">{bd.name}</div>
                     <div className="badge-status">
-                      {earned ? 'Earned' : `${bd.need - streak} days to go`}
+                      {earned ? 'Earned' : `${toGo} ${toGo === 1 ? 'day' : 'days'} to go`}
                     </div>
                   </div>
                 )
@@ -1187,6 +1211,29 @@ export default function App(): JSX.Element {
   function renderSettings(): JSX.Element {
     return (
       <div className="page page-settings">
+        {/* Your name */}
+        <div className="card">
+          <div className="card-title">Your name</div>
+          <p className="card-help">
+            Used to personalize your greeting and the block notifications.
+          </p>
+          <div className="add-row">
+            <input
+              className="field"
+              maxLength={40}
+              placeholder="What should we call you?"
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && nameDirty) void saveName()
+              }}
+            />
+            <button className="btn accent" disabled={!nameDirty} onClick={() => void saveName()}>
+              Save
+            </button>
+          </div>
+        </div>
+
         {/* Unlock challenge */}
         <div className="card">
           <div className="card-title">Unlock challenge</div>
@@ -1447,7 +1494,14 @@ export default function App(): JSX.Element {
             <button className="btn panic" onClick={() => void triggerPanic()}>
               PANIC
             </button>
-            <div className="avatar">{avatarLetter}</div>
+            <button
+              className={activeTab === 'settings' ? 'avatar active' : 'avatar'}
+              onClick={() => setActiveTab('settings')}
+              title="Settings"
+              aria-label="Open settings"
+            >
+              {avatarLetter}
+            </button>
           </div>
         </header>
 
