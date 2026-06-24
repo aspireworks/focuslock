@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  @keyframes flBreathe { 0%,100% { transform: scale(.62); } 50% { transform: scale(1); } }
+  @keyframes flGlow { 0%,100% { opacity:.55; } 50% { opacity:1; } }
+  @keyframes flBlink { 0%,49% { opacity:1; } 50%,100% { opacity:.15; } }
+</style>
+</helmet>
+
+<div style="position:absolute; left:80px; top:40px; font:700 30px 'Space Grotesk',system-ui; color:#1a1d24;">FocusLock — three directions</div>
+<div style="position:absolute; left:80px; top:82px; font:400 15px/1.5 system-ui; color:#555b66; width:760px;">Each column is one visual direction: a full dashboard on top, then the companion screen (lockout, unlock challenge, or panic) in that same style. Pan around and tell me which feels right — we'll build the winner out fully.</div>
+
+<!-- ============================ DIRECTION A — LAUNCHER ============================ -->
+<div data-drags-parent="1" style="position:absolute; left:80px; top:150px; font:600 13px 'Space Grotesk',system-ui; color:#2a2d36;">A · &nbsp;Launcher <span style="color:#7b7bff;">— Discord / Steam feel, icon rail + status banner</span></div>
+<div style="position:absolute; left:80px; top:178px; width:1020px;">
+  <div data-screen-label="Direction A — Dashboard" style="display:flex; height:712px; background:#0f1117; border:1px solid #262b3a; border-radius:14px; overflow:hidden; font-family:system-ui,'Segoe UI',sans-serif; color:#e6e8ee; box-shadow:0 24px 60px rgba(0,0,0,.18);">
+    <!-- icon rail -->
+    <div style="width:74px; background:#0a0c12; border-right:1px solid #1b1f2c; display:flex; flex-direction:column; align-items:center; padding:16px 0; gap:6px; flex:none;">
+      <div style="width:42px; height:42px; border-radius:12px; background:linear-gradient(150deg,#8b8bff,#5b5bf0); display:grid; place-items:center; box-shadow:0 6px 18px rgba(123,123,255,.5); margin-bottom:10px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"><path d="M12 2 L20 5 V11 C20 16 16 20 12 22 C8 20 4 16 4 11 V5 Z"/></svg>
+      </div>
+      <div style="width:46px; height:42px; border-radius:11px; background:rgba(123,123,255,.16); display:grid; place-items:center; position:relative;">
+        <div style="position:absolute; left:-12px; top:11px; width:3px; height:20px; border-radius:2px; background:#7b7bff;"></div>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9b9bff" stroke-width="2" stroke-linejoin="round"><path d="M3 11 L12 3 L21 11 V21 H3 Z"/></svg>
+      </div>
+      <div style="width:46px; height:42px; border-radius:11px; display:grid; place-items:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b7180" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+      <div style="width:46px; height:42px; border-radius:11px; display:grid; place-items:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b7180" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12 H21 M12 3 C15 6 15 18 12 21 C9 18 9 6 12 3"/></svg></div>
+      <div style="width:46px; height:42px; border-radius:11px; display:grid; place-items:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b7180" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9 H21 M8 3 V6 M16 3 V6"/></svg></div>
+      <div style="width:46px; height:42px; border-radius:11px; display:grid; place-items:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b7180" stroke-width="2"><path d="M4 20 V12 M10 20 V6 M16 20 V14 M22 20 H2"/></svg></div>
+      <div style="margin-top:auto; width:46px; height:42px; border-radius:11px; display:grid; place-items:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b7180" stroke-width="2"><circle cx="7" cy="8" r="2"/><path d="M11 8 H21 M3 8 H3.5"/><circle cx="16" cy="16" r="2"/><path d="M3 16 H12 M20 16 H20.5"/></svg></div>
+    </div>
+    <!-- main -->
+    <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
+      <div style="height:54px; flex:none; display:flex; align-items:center; justify-content:space-between; padding:0 22px; border-bottom:1px solid #1b1f2c;">
+        <div style="display:flex; align-items:baseline; gap:10px;"><span style="font:700 16px 'Space Grotesk';">Home</span><span style="font-size:13px; color:#6b7180;">Good evening, Marcus</span></div>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="display:flex; align-items:center; gap:7px; background:rgba(123,123,255,.12); border:1px solid rgba(123,123,255,.3); border-radius:999px; padding:5px 12px;"><span style="font-size:14px;">🔥</span><span style="font:700 13px 'Space Grotesk'; color:#b9b9ff;">12</span></div>
+          <div style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#404659,#262b3a); display:grid; place-items:center; font:700 13px 'Space Grotesk'; color:#c5c9d6;">M</div>
+        </div>
+      </div>
+      <div style="flex:1; overflow:hidden; padding:20px; display:flex; flex-direction:column; gap:16px;">
+        <!-- hero banner -->
+        <div style="display:flex; align-items:center; gap:20px; background:linear-gradient(115deg,rgba(123,123,255,.20),rgba(123,123,255,.04)); border:1px solid rgba(123,123,255,.32); border-radius:16px; padding:20px 22px;">
+          <div style="width:54px; height:54px; border-radius:14px; background:linear-gradient(150deg,#8b8bff,#5b5bf0); display:grid; place-items:center; box-shadow:0 8px 22px rgba(123,123,255,.5); flex:none;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2 L20 5 V11 C20 16 16 20 12 22 C8 20 4 16 4 11 V5 Z"/><path d="M9 12 l2 2 4-4.5"/></svg>
+          </div>
+          <div style="flex:1; min-width:0;">
+            <div style="font:700 19px 'Space Grotesk'; letter-spacing:.2px;">Protection active</div>
+            <div style="font-size:13.5px; color:#9aa0b0; margin-top:3px;">5 apps and 3 sites locked down · enforcing now</div>
+          </div>
+          <div style="text-align:right; padding-left:20px; border-left:1px solid rgba(123,123,255,.22);">
+            <div style="display:flex; align-items:baseline; gap:6px; justify-content:flex-end;"><span style="font:800 40px 'Space Grotesk'; line-height:1; color:#b9b9ff;">12</span><span style="font-size:18px;">🔥</span></div>
+            <div style="font-size:12px; color:#9aa0b0; margin-top:4px;">day streak · best 21</div>
+          </div>
+        </div>
+        <!-- stat tiles -->
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+          <div style="background:#171b26; border:1px solid #242a39; border-radius:13px; padding:15px 16px;"><div style="font:800 26px 'Space Grotesk'; color:#e6e8ee;">34</div><div style="font-size:12px; color:#8b91a3; margin-top:4px;">resisted this week</div></div>
+          <div style="background:#171b26; border:1px solid #242a39; border-radius:13px; padding:15px 16px;"><div style="font:800 26px 'Space Grotesk'; color:#e6e8ee;">218</div><div style="font-size:12px; color:#8b91a3; margin-top:4px;">total blocks</div></div>
+          <div style="background:#171b26; border:1px solid #242a39; border-radius:13px; padding:15px 16px;"><div style="font:800 26px 'Space Grotesk'; color:#e6e8ee;">18.4<span style="font-size:15px; color:#8b91a3;">h</span></div><div style="font-size:12px; color:#8b91a3; margin-top:4px;">time reclaimed</div></div>
+        </div>
+        <!-- two columns -->
+        <div style="flex:1; display:grid; grid-template-columns:1.15fr 1fr; gap:16px; min-height:0;">
+          <!-- locked apps -->
+          <div style="background:#171b26; border:1px solid #242a39; border-radius:13px; padding:16px; display:flex; flex-direction:column; min-height:0;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;"><span style="font:600 14px 'Space Grotesk';">Locked apps</span><span style="font-size:12px; color:#7b7bff; cursor:pointer;">+ Add</span></div>
+            <div style="display:flex; flex-direction:column; gap:8px; overflow:hidden;">
+              <div style="display:flex; align-items:center; gap:11px; background:#1d2230; border:1px solid #2a3142; border-radius:10px; padding:9px 11px;"><div style="width:30px; height:30px; border-radius:8px; background:#1b2838; display:grid; place-items:center; font:700 11px 'Space Grotesk'; color:#6aa3d6; flex:none;">ST</div><span style="flex:1; font-size:13.5px;">Steam</span><span style="font:600 10.5px 'Space Grotesk'; letter-spacing:.05em; color:#ff8a8a; background:rgba(255,80,80,.13); border:1px solid rgba(255,80,80,.28); padding:2px 8px; border-radius:6px;">ALWAYS</span></div>
+              <div style="display:flex; align-items:center; gap:11px; background:#1d2230; border:1px solid #2a3142; border-radius:10px; padding:9px 11px;"><div style="width:30px; height:30px; border-radius:8px; background:#2a2030; display:grid; place-items:center; font:700 11px 'Space Grotesk'; color:#cf9ad6; flex:none;">EG</div><span style="flex:1; font-size:13.5px;">Epic Games</span><span style="font:600 10.5px 'Space Grotesk'; letter-spacing:.05em; color:#ff8a8a; background:rgba(255,80,80,.13); border:1px solid rgba(255,80,80,.28); padding:2px 8px; border-radius:6px;">ALWAYS</span></div>
+              <div style="display:flex; align-items:center; gap:11px; background:#1d2230; border:1px solid #2a3142; border-radius:10px; padding:9px 11px;"><div style="width:30px; height:30px; border-radius:8px; background:#202a2a; display:grid; place-items:center; font:700 11px 'Space Grotesk'; color:#7fc7c0; flex:none;">BN</div><span style="flex:1; font-size:13.5px;">Battle.net</span><span style="font:600 10.5px 'Space Grotesk'; letter-spacing:.05em; color:#b9b9ff; background:rgba(123,123,255,.14); border:1px solid rgba(123,123,255,.3); padding:2px 8px; border-radius:6px;">SCHEDULE</span></div>
+              <div style="display:flex; align-items:center; gap:11px; background:#1d2230; border:1px solid #2a3142; border-radius:10px; padding:9px 11px;"><div style="width:30px; height:30px; border-radius:8px; background:#1f2a20; display:grid; place-items:center; font:700 11px 'Space Grotesk'; color:#8ccf8a; flex:none;">XB</div><span style="flex:1; font-size:13.5px;">Xbox</span><span style="font:600 10.5px 'Space Grotesk'; letter-spacing:.05em; color:#ffce7a; background:rgba(255,180,60,.13); border:1px solid rgba(255,180,60,.28); padding:2px 8px; border-radius:6px;">2h LIMIT</span></div>
+            </div>
+          </div>
+          <!-- activity -->
+          <div style="background:#171b26; border:1px solid #242a39; border-radius:13px; padding:16px; display:flex; flex-direction:column;">
+            <div style="font:600 14px 'Space Grotesk'; margin-bottom:14px;">This week</div>
+            <div style="display:flex; align-items:flex-end; gap:9px; height:88px;">
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%;"><div style="flex:1; width:100%; display:flex; align-items:flex-end;"><div style="width:100%; height:42%; background:linear-gradient(180deg,#9b9bff,#6b6bf0); border-radius:5px 5px 0 0;"></div></div><span style="font-size:10px; color:#6b7180;">M</span></div>
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%;"><div style="flex:1; width:100%; display:flex; align-items:flex-end;"><div style="width:100%; height:68%; background:linear-gradient(180deg,#9b9bff,#6b6bf0); border-radius:5px 5px 0 0;"></div></div><span style="font-size:10px; color:#6b7180;">T</span></div>
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%;"><div style="flex:1; width:100%; display:flex; align-items:flex-end;"><div style="width:100%; height:30%; background:linear-gradient(180deg,#9b9bff,#6b6bf0); border-radius:5px 5px 0 0;"></div></div><span style="font-size:10px; color:#6b7180;">W</span></div>
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%;"><div style="flex:1; width:100%; display:flex; align-items:flex-end;"><div style="width:100%; height:88%; background:linear-gradient(180deg,#9b9bff,#6b6bf0); border-radius:5px 5px 0 0;"></div></div><span style="font-size:10px; color:#6b7180;">T</span></div>
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%;"><div style="flex:1; width:100%; display:flex; align-items:flex-end;"><div style="width:100%; height:100%; background:linear-gradient(180deg,#9b9bff,#6b6bf0); border-radius:5px 5px 0 0;"></div></div><span style="font-size:10px; color:#6b7180;">F</span></div>
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%;"><div style="flex:1; width:100%; display:flex; align-items:flex-end;"><div style="width:100%; height:55%; background:linear-gradient(180deg,#9b9bff,#6b6bf0); border-radius:5px 5px 0 0;"></div></div><span style="font-size:10px; color:#6b7180;">S</span></div>
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%;"><div style="flex:1; width:100%; display:flex; align-items:flex-end;"><div style="width:100%; height:20%; background:linear-gradient(180deg,#9b9bff,#6b6bf0); border-radius:5px 5px 0 0;"></div></div><span style="font-size:10px; color:#6b7180;">S</span></div>
+            </div>
+            <div style="height:1px; background:#242a39; margin:14px 0;"></div>
+            <div style="font-size:11px; color:#8b91a3; text-transform:uppercase; letter-spacing:.08em; margin-bottom:9px;">Recent blocks</div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div style="display:flex; justify-content:space-between; font-size:13px;"><span>Steam</span><span style="color:#6b7180;">7:14 PM</span></div>
+              <div style="display:flex; justify-content:space-between; font-size:13px;"><span>Epic Games</span><span style="color:#6b7180;">5:02 PM</span></div>
+              <div style="display:flex; justify-content:space-between; font-size:13px;"><span>store.steampowered.com</span><span style="color:#6b7180;">1:48 PM</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- companion A: lockout -->
+<div data-drags-parent="1" style="position:absolute; left:80px; top:930px; font:600 13px 'Space Grotesk',system-ui; color:#2a2d36;">A · &nbsp;Lockout takeover <span style="color:#7b7bff;">— what they see when a game is caught</span></div>
+<div style="position:absolute; left:80px; top:958px; width:1020px;">
+  <div data-screen-label="Direction A — Lockout" style="height:470px; background:radial-gradient(circle at 50% 34%, #1a1a3a, #0a0b14 72%); border:1px solid #262b3a; border-radius:14px; overflow:hidden; display:grid; place-items:center; text-align:center; font-family:system-ui,'Segoe UI',sans-serif; color:#e6e8ee; box-shadow:0 24px 60px rgba(0,0,0,.18);">
+    <div style="max-width:560px; padding:24px;">
+      <div style="width:72px; height:72px; border-radius:20px; background:linear-gradient(150deg,#8b8bff,#5b5bf0); display:grid; place-items:center; margin:0 auto 22px; box-shadow:0 10px 34px rgba(123,123,255,.55);">
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2 L20 5 V11 C20 16 16 20 12 22 C8 20 4 16 4 11 V5 Z"/><path d="M9.5 12 l2 2 3.5-4"/></svg>
+      </div>
+      <div style="font:700 13px 'Space Grotesk'; letter-spacing:.18em; color:#9b9bff; margin-bottom:10px;">BLOCKED · STEAM CLOSED</div>
+      <div style="font:700 26px 'Space Grotesk'; line-height:1.25; margin-bottom:14px;">Not right now. You've got this.</div>
+      <div style="font-size:15px; line-height:1.6; color:#aab0c0; margin-bottom:26px;">You're <strong style="color:#b9b9ff;">12 days strong</strong> — that's real progress. Don't trade it for twenty minutes you won't remember tomorrow.</div>
+      <div style="display:flex; gap:12px; justify-content:center;">
+        <button style="background:linear-gradient(150deg,#8b8bff,#5b5bf0); color:#fff; border:none; border-radius:11px; padding:13px 26px; font:700 14px 'Space Grotesk'; cursor:pointer; box-shadow:0 8px 22px rgba(123,123,255,.4);">I'm good — close this</button>
+        <button style="background:rgba(255,255,255,.04); color:#9aa0b0; border:1px solid #2a3142; border-radius:11px; padding:13px 22px; font:600 14px 'Space Grotesk'; cursor:pointer;">Unlock anyway</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ DIRECTION B — HUD ============================ -->
+<div data-drags-parent="1" style="position:absolute; left:1180px; top:150px; font:600 13px 'Space Grotesk',system-ui; color:#2a2d36;">B · &nbsp;Command HUD <span style="color:#1aa6b0;">— mono readouts, neon cyan, gamer-overlay energy</span></div>
+<div style="position:absolute; left:1180px; top:178px; width:1020px;">
+  <div data-screen-label="Direction B — Dashboard" style="height:712px; background:#080a10; border:1px solid #15303f; border-radius:5px; overflow:hidden; font-family:'Chakra Petch',system-ui; color:#d4eef5; box-shadow:0 24px 60px rgba(0,0,0,.22);">
+    <!-- HUD strip -->
+    <div style="height:60px; display:flex; align-items:center; justify-content:space-between; padding:0 22px; background:linear-gradient(90deg,rgba(34,211,238,.10),transparent); border-bottom:1px solid #16404d;">
+      <div style="display:flex; align-items:center; gap:13px;">
+        <span style="width:9px; height:9px; border-radius:50%; background:#2ee6e6; box-shadow:0 0 12px #2ee6e6; animation:flGlow 1.8s ease-in-out infinite;"></span>
+        <span style="font:700 15px 'Chakra Petch'; letter-spacing:.12em;">FOCUSLOCK</span>
+        <span style="font:600 11px 'JetBrains Mono'; color:#2ee6e6; letter-spacing:.1em; border:1px solid #1c5562; padding:2px 8px; border-radius:3px;">SYSTEM ARMED</span>
+      </div>
+      <div style="font:500 12px 'JetBrains Mono'; color:#5f7d8a; letter-spacing:.08em;">UPTIME 04:12:33<span style="color:#1c4a55; margin:0 9px;">|</span>5 TARGETS<span style="color:#1c4a55; margin:0 9px;">|</span>v0.9.1</div>
+    </div>
+    <div style="padding:18px; display:grid; grid-template-columns:1.25fr 1fr; grid-template-rows:auto 1fr; gap:14px; height:calc(712px - 60px); box-sizing:border-box;">
+      <!-- streak readout -->
+      <div style="position:relative; background:#0c1119; border:1px solid #16404d; border-radius:4px; padding:20px 22px; grid-column:1 / 2;">
+        <div style="position:absolute; top:8px; left:8px; width:14px; height:14px; border-top:2px solid #2ee6e6; border-left:2px solid #2ee6e6;"></div>
+        <div style="position:absolute; top:8px; right:8px; width:14px; height:14px; border-top:2px solid #2ee6e6; border-right:2px solid #2ee6e6;"></div>
+        <div style="position:absolute; bottom:8px; left:8px; width:14px; height:14px; border-bottom:2px solid #2ee6e6; border-left:2px solid #2ee6e6;"></div>
+        <div style="position:absolute; bottom:8px; right:8px; width:14px; height:14px; border-bottom:2px solid #2ee6e6; border-right:2px solid #2ee6e6;"></div>
+        <div style="font:500 11px 'JetBrains Mono'; letter-spacing:.22em; color:#5f7d8a;">CURRENT STREAK</div>
+        <div style="display:flex; align-items:flex-end; gap:14px; margin-top:6px;">
+          <span style="font:700 64px 'JetBrains Mono'; line-height:.9; color:#2ee6e6; text-shadow:0 0 22px rgba(46,230,230,.55);">12</span>
+          <span style="font:600 14px 'Chakra Petch'; letter-spacing:.18em; color:#8fd0d8; padding-bottom:8px;">DAYS CLEAN</span>
+        </div>
+        <div style="margin-top:16px; display:flex; gap:4px;">
+          <div style="flex:1; height:7px; background:#2ee6e6; border-radius:1px; box-shadow:0 0 8px rgba(46,230,230,.5);"></div>
+          <div style="flex:1; height:7px; background:#2ee6e6; border-radius:1px; box-shadow:0 0 8px rgba(46,230,230,.5);"></div>
+          <div style="flex:1; height:7px; background:#2ee6e6; border-radius:1px; box-shadow:0 0 8px rgba(46,230,230,.5);"></div>
+          <div style="flex:1; height:7px; background:#2ee6e6; border-radius:1px;"></div>
+          <div style="flex:1; height:7px; background:#13303a; border-radius:1px;"></div>
+          <div style="flex:1; height:7px; background:#13303a; border-radius:1px;"></div>
+        </div>
+        <div style="font:500 11px 'JetBrains Mono'; color:#5f7d8a; margin-top:8px; letter-spacing:.06em;">TARGET 30 DAYS · 40% &gt;&gt; PERSONAL BEST 21</div>
+      </div>
+      <!-- side stats -->
+      <div style="grid-column:2 / 3; display:grid; grid-template-rows:1fr 1fr; gap:14px;">
+        <div style="background:#0c1119; border:1px solid #16404d; border-radius:4px; padding:14px 16px; display:flex; flex-direction:column; justify-content:center;"><div style="font:700 30px 'JetBrains Mono'; color:#4ade80; text-shadow:0 0 14px rgba(74,222,128,.4);">34</div><div style="font:500 10.5px 'JetBrains Mono'; letter-spacing:.16em; color:#5f7d8a; margin-top:4px;">RESISTED // 7D</div></div>
+        <div style="background:#0c1119; border:1px solid #16404d; border-radius:4px; padding:14px 16px; display:flex; flex-direction:column; justify-content:center;"><div style="font:700 30px 'JetBrains Mono'; color:#d4eef5;">218</div><div style="font:500 10.5px 'JetBrains Mono'; letter-spacing:.16em; color:#5f7d8a; margin-top:4px;">TOTAL BLOCKS</div></div>
+      </div>
+      <!-- targets locked -->
+      <div style="grid-column:1 / 2; background:#0c1119; border:1px solid #16404d; border-radius:4px; padding:16px; display:flex; flex-direction:column; min-height:0;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;"><span style="font:600 12px 'JetBrains Mono'; letter-spacing:.16em; color:#8fd0d8;">TARGETS LOCKED</span><span style="font:500 10.5px 'JetBrains Mono'; color:#5f7d8a;">[ + ADD ]</span></div>
+        <div style="display:flex; flex-direction:column; gap:7px; font-family:'JetBrains Mono';">
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 11px; background:#0a0f16; border:1px solid #143540; border-radius:3px;"><span style="font-size:13px; color:#c9e6ed;">steam.exe</span><span style="font:600 10px 'JetBrains Mono'; color:#ff6b6b; border:1px solid #5a2230; padding:2px 7px; border-radius:2px;">ALWAYS</span></div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 11px; background:#0a0f16; border:1px solid #143540; border-radius:3px;"><span style="font-size:13px; color:#c9e6ed;">EpicGamesLauncher.exe</span><span style="font:600 10px 'JetBrains Mono'; color:#ff6b6b; border:1px solid #5a2230; padding:2px 7px; border-radius:2px;">ALWAYS</span></div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 11px; background:#0a0f16; border:1px solid #143540; border-radius:3px;"><span style="font-size:13px; color:#c9e6ed;">Battle.net.exe</span><span style="font:600 10px 'JetBrains Mono'; color:#2ee6e6; border:1px solid #1c5562; padding:2px 7px; border-radius:2px;">SCHED</span></div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 11px; background:#0a0f16; border:1px solid #143540; border-radius:3px;"><span style="font-size:13px; color:#c9e6ed;">XboxApp.exe</span><span style="font:600 10px 'JetBrains Mono'; color:#ffc861; border:1px solid #5a4a22; padding:2px 7px; border-radius:2px;">2H CAP</span></div>
+        </div>
+      </div>
+      <!-- feed + equalizer -->
+      <div style="grid-column:2 / 3; background:#0c1119; border:1px solid #16404d; border-radius:4px; padding:16px; display:flex; flex-direction:column; min-height:0;">
+        <span style="font:600 12px 'JetBrains Mono'; letter-spacing:.16em; color:#8fd0d8; margin-bottom:12px;">ACTIVITY // 7D</span>
+        <div style="display:flex; align-items:flex-end; gap:6px; height:60px; margin-bottom:14px;">
+          <div style="flex:1; height:40%; background:#2ee6e6; box-shadow:0 0 8px rgba(46,230,230,.4);"></div>
+          <div style="flex:1; height:66%; background:#2ee6e6; box-shadow:0 0 8px rgba(46,230,230,.4);"></div>
+          <div style="flex:1; height:28%; background:#2ee6e6;"></div>
+          <div style="flex:1; height:86%; background:#2ee6e6; box-shadow:0 0 8px rgba(46,230,230,.4);"></div>
+          <div style="flex:1; height:100%; background:#2ee6e6; box-shadow:0 0 10px rgba(46,230,230,.55);"></div>
+          <div style="flex:1; height:52%; background:#2ee6e6;"></div>
+          <div style="flex:1; height:18%; background:#1c4a55;"></div>
+        </div>
+        <span style="font:600 11px 'JetBrains Mono'; letter-spacing:.14em; color:#5f7d8a; margin-bottom:9px;">&gt; KILL LOG</span>
+        <div style="display:flex; flex-direction:column; gap:6px; font:500 12px 'JetBrains Mono';">
+          <div style="color:#8fd0d8;"><span style="color:#4ade80;">19:14</span> &nbsp;steam.exe&nbsp;<span style="color:#ff6b6b;">TERMINATED</span></div>
+          <div style="color:#8fd0d8;"><span style="color:#4ade80;">17:02</span> &nbsp;epic.exe&nbsp;<span style="color:#ff6b6b;">TERMINATED</span></div>
+          <div style="color:#8fd0d8;"><span style="color:#4ade80;">13:48</span> &nbsp;steampowered&nbsp;<span style="color:#ff6b6b;">DENIED</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- companion B: challenge modal -->
+<div data-drags-parent="1" style="position:absolute; left:1180px; top:930px; font:600 13px 'Space Grotesk',system-ui; color:#2a2d36;">B · &nbsp;Unlock challenge <span style="color:#1aa6b0;">— type it out to weaken the block</span></div>
+<div style="position:absolute; left:1180px; top:958px; width:1020px;">
+  <div data-screen-label="Direction B — Challenge" style="height:470px; background:#05070c; border:1px solid #15303f; border-radius:5px; overflow:hidden; display:grid; place-items:center; font-family:'Chakra Petch',system-ui; color:#d4eef5; box-shadow:0 24px 60px rgba(0,0,0,.22);">
+    <div style="position:relative; width:600px; background:#0b1019; border:1px solid #1c5562; border-radius:4px; padding:24px;">
+      <div style="position:absolute; top:8px; left:8px; width:14px; height:14px; border-top:2px solid #2ee6e6; border-left:2px solid #2ee6e6;"></div>
+      <div style="position:absolute; bottom:8px; right:8px; width:14px; height:14px; border-bottom:2px solid #2ee6e6; border-right:2px solid #2ee6e6;"></div>
+      <div style="font:700 16px 'Chakra Petch'; letter-spacing:.14em; color:#2ee6e6;">UNLOCK CHALLENGE</div>
+      <div style="font:500 12px 'JetBrains Mono'; color:#5f7d8a; margin-top:6px; letter-spacing:.04em;">TYPE THE TEXT BELOW TO WEAKEN THE BLOCK FOR 10 MINUTES.</div>
+      <div style="margin-top:16px; padding:14px; background:#06090f; border:1px solid #143540; border-radius:3px; font:500 14px/1.7 'JetBrains Mono'; user-select:none;"><span style="color:#4ade80;">harbor velvet anchor drift</span> <span style="color:#5f7d8a;">copper meadow signal pivot lantern tunnel orchard ember vault ridge</span></div>
+      <div style="margin-top:12px; padding:11px 14px; background:#06090f; border:1px solid #1c5562; border-radius:3px; font:500 14px 'JetBrains Mono'; color:#c9e6ed;">harbor velvet anchor drift<span style="color:#2ee6e6; animation:flBlink 1s step-end infinite;">▌</span></div>
+      <div style="height:6px; background:#0a0f16; border-radius:2px; margin-top:16px; overflow:hidden;"><div style="width:28%; height:100%; background:#2ee6e6; box-shadow:0 0 10px rgba(46,230,230,.6);"></div></div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
+        <span style="font:500 11px 'JetBrains Mono'; color:#5f7d8a;">4 / 14 WORDS</span>
+        <div style="display:flex; gap:10px;">
+          <button style="background:transparent; border:1px solid #1c4a55; color:#8fd0d8; border-radius:3px; padding:9px 18px; font:600 12px 'Chakra Petch'; letter-spacing:.1em; cursor:pointer;">CANCEL</button>
+          <button style="background:#13303a; border:1px solid #1c5562; color:#3a6670; border-radius:3px; padding:9px 18px; font:600 12px 'Chakra Petch'; letter-spacing:.1em; cursor:not-allowed;">UNLOCK ▸</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ DIRECTION C — PREMIUM ============================ -->
+<div data-drags-parent="1" style="position:absolute; left:2280px; top:150px; font:600 13px 'Space Grotesk',system-ui; color:#2a2d36;">C · &nbsp;Focus <span style="color:#1f9d6b;">— premium &amp; calm, top tabs, streak ring hero</span></div>
+<div style="position:absolute; left:2280px; top:178px; width:1020px;">
+  <div data-screen-label="Direction C — Dashboard" style="height:712px; background:radial-gradient(120% 90% at 50% 0%, #14181f, #0a0c10 70%); border:1px solid #20242e; border-radius:18px; overflow:hidden; font-family:'Sora',system-ui; color:#e8eaf0; box-shadow:0 24px 60px rgba(0,0,0,.2);">
+    <!-- top tabs -->
+    <div style="height:62px; display:flex; align-items:center; justify-content:space-between; padding:0 24px; border-bottom:1px solid #1a1e27;">
+      <div style="display:flex; align-items:center; gap:11px;">
+        <div style="width:30px; height:30px; border-radius:9px; background:linear-gradient(150deg,#4be3a3,#23b97e); display:grid; place-items:center;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#06140e" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2 L20 5 V11 C20 16 16 20 12 22 C8 20 4 16 4 11 V5 Z"/><path d="M9.5 12 l2 2 3.5-4"/></svg></div>
+        <span style="font:700 16px 'Sora';">FocusLock</span>
+      </div>
+      <div style="display:flex; gap:4px; background:#11141b; border:1px solid #1d212b; border-radius:11px; padding:4px;">
+        <span style="font:600 13px 'Sora'; color:#06140e; background:#34d399; padding:7px 16px; border-radius:8px;">Home</span>
+        <span style="font:500 13px 'Sora'; color:#8990a0; padding:7px 16px;">Blocklist</span>
+        <span style="font:500 13px 'Sora'; color:#8990a0; padding:7px 16px;">Schedule</span>
+        <span style="font:500 13px 'Sora'; color:#8990a0; padding:7px 16px;">Stats</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:13px; color:#8990a0;">Marcus</span><div style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#2c3340,#1b1f29); display:grid; place-items:center; font:600 13px 'Sora'; color:#c5c9d6;">M</div></div>
+    </div>
+    <div style="padding:26px 28px; display:flex; flex-direction:column; gap:22px; height:calc(712px - 62px); box-sizing:border-box;">
+      <!-- hero: ring + flanking stats -->
+      <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:24px; padding:8px 0;">
+        <div style="display:flex; flex-direction:column; gap:12px; align-items:flex-end; text-align:right;">
+          <div style="width:200px;"><div style="font:800 30px 'Sora'; color:#e8eaf0;">34</div><div style="font-size:12.5px; color:#8990a0; margin-top:2px;">urges resisted this week</div></div>
+          <div style="width:200px;"><div style="font:800 30px 'Sora'; color:#e8eaf0;">18.4<span style="font-size:16px; color:#8990a0;"> hrs</span></div><div style="font-size:12.5px; color:#8990a0; margin-top:2px;">time reclaimed</div></div>
+        </div>
+        <!-- ring -->
+        <div style="position:relative; width:208px; height:208px; display:grid; place-items:center;">
+          <svg width="208" height="208" viewBox="0 0 208 208" style="position:absolute; inset:0; transform:rotate(-90deg);">
+            <circle cx="104" cy="104" r="92" fill="none" stroke="#1b2129" stroke-width="14"/>
+            <circle cx="104" cy="104" r="92" fill="none" stroke="#34d399" stroke-width="14" stroke-linecap="round" stroke-dasharray="578" stroke-dashoffset="347" style="filter:drop-shadow(0 0 8px rgba(52,211,153,.6));"/>
+          </svg>
+          <div style="text-align:center;">
+            <div style="font:800 56px 'Sora'; line-height:1; color:#e8eaf0;">12</div>
+            <div style="font-size:13px; color:#8990a0; margin-top:4px;">day streak</div>
+            <div style="font:600 11px 'Sora'; color:#34d399; margin-top:8px; letter-spacing:.04em;">18 DAYS TO GOAL</div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:12px; align-items:flex-start;">
+          <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(52,211,153,.1); border:1px solid rgba(52,211,153,.28); border-radius:999px; padding:7px 14px;"><span style="width:8px; height:8px; border-radius:50%; background:#34d399; box-shadow:0 0 10px #34d399;"></span><span style="font:600 13px 'Sora'; color:#7ee8c0;">Protection active</span></div>
+          <div style="font-size:13px; color:#8990a0; line-height:1.5; max-width:200px;">5 apps and 3 sites are locked. Best streak so far: <strong style="color:#cfd3dd;">21 days</strong>.</div>
+        </div>
+      </div>
+      <!-- locked grid -->
+      <div style="flex:1; display:grid; grid-template-columns:1.3fr 1fr; gap:18px; min-height:0;">
+        <div style="background:#12151c; border:1px solid #20242e; border-radius:15px; padding:18px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;"><span style="font:600 14px 'Sora';">Locked</span><span style="font-size:12.5px; color:#34d399;">Manage</span></div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div style="display:flex; align-items:center; gap:10px; background:#171b23; border:1px solid #232834; border-radius:12px; padding:11px;"><div style="width:32px; height:32px; border-radius:9px; background:#1b2838; display:grid; place-items:center; font:700 11px 'Sora'; color:#6aa3d6;">ST</div><div><div style="font-size:13px; font-weight:600;">Steam</div><div style="font-size:11px; color:#7a8190;">Always</div></div></div>
+            <div style="display:flex; align-items:center; gap:10px; background:#171b23; border:1px solid #232834; border-radius:12px; padding:11px;"><div style="width:32px; height:32px; border-radius:9px; background:#2a2030; display:grid; place-items:center; font:700 11px 'Sora'; color:#cf9ad6;">EG</div><div><div style="font-size:13px; font-weight:600;">Epic Games</div><div style="font-size:11px; color:#7a8190;">Always</div></div></div>
+            <div style="display:flex; align-items:center; gap:10px; background:#171b23; border:1px solid #232834; border-radius:12px; padding:11px;"><div style="width:32px; height:32px; border-radius:9px; background:#202a2a; display:grid; place-items:center; font:700 11px 'Sora'; color:#7fc7c0;">BN</div><div><div style="font-size:13px; font-weight:600;">Battle.net</div><div style="font-size:11px; color:#7a8190;">Schedule</div></div></div>
+            <div style="display:flex; align-items:center; gap:10px; background:#171b23; border:1px solid #232834; border-radius:12px; padding:11px;"><div style="width:32px; height:32px; border-radius:9px; background:#1f2a20; display:grid; place-items:center; font:700 11px 'Sora'; color:#8ccf8a;">XB</div><div><div style="font-size:13px; font-weight:600;">Xbox</div><div style="font-size:11px; color:#7a8190;">2h / day</div></div></div>
+          </div>
+        </div>
+        <div style="background:#12151c; border:1px solid #20242e; border-radius:15px; padding:18px; display:flex; flex-direction:column;">
+          <span style="font:600 14px 'Sora'; margin-bottom:16px;">This week</span>
+          <div style="display:flex; align-items:flex-end; gap:8px; flex:1;">
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; height:100%;"><div style="flex:1; width:100%; display:flex; align-items:flex-end;"><div style="width:100%; height:42%; background:#34d399; border-radius:6px 6px 0 0; opacity:.55;"></div></div><span style="font-size:10px; color:#7a8190;">M</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; height:100%;"><div style="flex:1; width:100%; display:flex; align-items:flex-end;"><div style="width:100%; height:68%; background:#34d399; border-radius:6px 6px 0 0; opacity:.7;"></div></div><span style="font-size:10px; color:#7a8190;">T</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; height:100%;"><div style="flex:1; width:100%; display:flex; align-items:flex-end;"><div style="width:100%; height:30%; background:#34d399; border-radius:6px 6px 0 0; opacity:.5;"></div></div><span style="font-size:10px; color:#7a8190;">W</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; height:100%;"><div style="flex:1; width:100%; display:flex; align-items:flex-end;"><div style="width:100%; height:88%; background:#34d399; border-radius:6px 6px 0 0; opacity:.85;"></div></div><span style="font-size:10px; color:#7a8190;">T</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; height:100%;"><div style="flex:1; width:100%; display:flex; align-items:flex-end;"><div style="width:100%; height:100%; background:#34d399; border-radius:6px 6px 0 0;"></div></div><span style="font-size:10px; color:#7a8190;">F</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; height:100%;"><div style="flex:1; width:100%; display:flex; align-items:flex-end;"><div style="width:100%; height:55%; background:#34d399; border-radius:6px 6px 0 0; opacity:.65;"></div></div><span style="font-size:10px; color:#7a8190;">S</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; height:100%;"><div style="flex:1; width:100%; display:flex; align-items:flex-end;"><div style="width:100%; height:20%; background:#34d399; border-radius:6px 6px 0 0; opacity:.4;"></div></div><span style="font-size:10px; color:#7a8190;">S</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- companion C: panic -->
+<div data-drags-parent="1" style="position:absolute; left:2280px; top:930px; font:600 13px 'Space Grotesk',system-ui; color:#2a2d36;">C · &nbsp;Panic mode <span style="color:#1f9d6b;">— one-tap lockdown + breather, can't cancel early</span></div>
+<div style="position:absolute; left:2280px; top:958px; width:1020px;">
+  <div data-screen-label="Direction C — Panic" style="height:470px; background:radial-gradient(circle at 50% 42%, #10231c, #07100c 72%); border:1px solid #20242e; border-radius:18px; overflow:hidden; display:grid; place-items:center; text-align:center; font-family:'Sora',system-ui; color:#e8eaf0; box-shadow:0 24px 60px rgba(0,0,0,.2);">
+    <div style="padding:24px;">
+      <div style="position:relative; width:200px; height:200px; display:grid; place-items:center; margin:0 auto 18px;">
+        <div style="position:absolute; width:180px; height:180px; border-radius:50%; background:radial-gradient(circle, rgba(52,211,153,.5), rgba(52,211,153,.06)); animation:flBreathe 5s ease-in-out infinite;"></div>
+        <div style="position:relative; font:600 18px 'Sora'; color:#eafff6; z-index:1;">Breathe in…</div>
+      </div>
+      <div style="font:700 22px 'Sora'; margin-bottom:10px;">This feeling will pass.</div>
+      <div style="font-size:15px; line-height:1.6; color:#9fc8b6; max-width:440px; margin:0 auto 20px;">The urge is a wave, not a command. You've ridden it out 12 days running — ride this one too.</div>
+      <div style="font:700 34px 'JetBrains Mono'; color:#34d399; letter-spacing:1px;">04:32</div>
+      <div style="font-size:12.5px; color:#6e8a7d; margin-top:6px;">lockdown can't be cancelled early — that's the point</div>
+    </div>
+  </div>
+</div>
+
+<!-- sticky notes -->
+<div style="position:absolute; left:1115px; top:300px; width:56px; height:120px; display:grid; place-items:center; color:#3a3f4a; font:700 30px 'Space Grotesk';">→</div>
+<div style="position:absolute; left:2215px; top:300px; width:56px; height:120px; display:grid; place-items:center; color:#3a3f4a; font:700 30px 'Space Grotesk';">→</div>
+<div style="position:absolute; left:80px; top:1452px; width:300px; background:#fef4a8; padding:14px 16px; font:400 12.5px/1.5 system-ui; color:#4a4326; box-shadow:0 2px 8px rgba(0,0,0,.12); transform:rotate(-1deg); border-radius:2px;"><strong>Safest pick.</strong> Closest to what gamers already know (Discord/Steam). Icon rail scales as you add more sections later.</div>
+<div style="position:absolute; left:1180px; top:1452px; width:300px; background:#fef4a8; padding:14px 16px; font:400 12.5px/1.5 system-ui; color:#4a4326; box-shadow:0 2px 8px rgba(0,0,0,.12); transform:rotate(1deg); border-radius:2px;"><strong>Boldest pick.</strong> Most distinctly "gamer." The kill-log + mono readouts make blocking feel powerful. Risk: can read busy.</div>
+<div style="position:absolute; left:2280px; top:1452px; width:300px; background:#fef4a8; padding:14px 16px; font:400 12.5px/1.5 system-ui; color:#4a4326; box-shadow:0 2px 8px rgba(0,0,0,.12); transform:rotate(-1deg); border-radius:2px;"><strong>Most premium.</strong> The streak ring is the emotional hook. Calmer, recovery-forward — modern without shouting.</div>
+
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;height:100%;background:#0b0d13;}
+  *{box-sizing:border-box;}
+  ::-webkit-scrollbar{width:9px;height:9px;}
+  ::-webkit-scrollbar-thumb{background:#262b3a;border-radius:6px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  @keyframes flBreathe{0%,100%{transform:scale(.6);}50%{transform:scale(1);}}
+  @keyframes flGlow{0%,100%{opacity:.5;}50%{opacity:1;}}
+  @keyframes flBlink{0%,49%{opacity:1;}50%,100%{opacity:0;}}
+  @keyframes flUp{from{transform:translateY(8px);}to{transform:none;}}
+</style>
+</helmet>
+
+<div style="display:flex; height:100vh; width:100%; background:#0f1117; font-family:system-ui,'Segoe UI',sans-serif; color:#e6e8ee; overflow:hidden;">
+  <!-- ICON RAIL -->
+  <nav style="width:74px; background:#0a0c12; border-right:1px solid #1b1f2c; display:flex; flex-direction:column; align-items:center; padding:16px 0; gap:6px; flex:none;">
+    <div style="width:42px; height:42px; border-radius:12px; background:linear-gradient(150deg,#8b8bff,#5b5bf0); display:grid; place-items:center; box-shadow:0 6px 18px rgba(123,123,255,.5); margin-bottom:12px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2 L20 5 V11 C20 16 16 20 12 22 C8 20 4 16 4 11 V5 Z"></path><path d="M9.3 12 l2 2 3.4-4"></path></svg>
+    </div>
+    <button onClick="{{ navHome }}" title="Home" style="position:relative; width:48px; height:46px; border:none; background:transparent; border-radius:12px; display:grid; place-items:center; cursor:pointer; color:#c5c9d6;">
+      <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}"><div style="position:absolute; inset:0; background:rgba(123,123,255,.16); border-radius:12px;"></div><div style="position:absolute; left:-13px; top:12px; width:3px; height:22px; border-radius:2px; background:#7b7bff;"></div></sc-if>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" style="position:relative;"><path d="M3 11 L12 3 L21 11 V21 H3 Z"></path></svg>
+    </button>
+    <button onClick="{{ navApps }}" title="Apps" style="position:relative; width:48px; height:46px; border:none; background:transparent; border-radius:12px; display:grid; place-items:center; cursor:pointer; color:#c5c9d6;">
+      <sc-if value="{{ isApps }}"><div style="position:absolute; inset:0; background:rgba(123,123,255,.16); border-radius:12px;"></div><div style="position:absolute; left:-13px; top:12px; width:3px; height:22px; border-radius:2px; background:#7b7bff;"></div></sc-if>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:relative;"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>
+    </button>
+    <button onClick="{{ navSites }}" title="Websites" style="position:relative; width:48px; height:46px; border:none; background:transparent; border-radius:12px; display:grid; place-items:center; cursor:pointer; color:#c5c9d6;">
+      <sc-if value="{{ isSites }}"><div style="position:absolute; inset:0; background:rgba(123,123,255,.16); border-radius:12px;"></div><div style="position:absolute; left:-13px; top:12px; width:3px; height:22px; border-radius:2px; background:#7b7bff;"></div></sc-if>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:relative;"><circle cx="12" cy="12" r="9"></circle><path d="M3 12 H21 M12 3 C15 6.5 15 17.5 12 21 C9 17.5 9 6.5 12 3"></path></svg>
+    </button>
+    <button onClick="{{ navSchedule }}" title="Schedule" style="position:relative; width:48px; height:46px; border:none; background:transparent; border-radius:12px; display:grid; place-items:center; cursor:pointer; color:#c5c9d6;">
+      <sc-if value="{{ isSchedule }}"><div style="position:absolute; inset:0; background:rgba(123,123,255,.16); border-radius:12px;"></div><div style="position:absolute; left:-13px; top:12px; width:3px; height:22px; border-radius:2px; background:#7b7bff;"></div></sc-if>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:relative;"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 9 H21 M8 3 V6 M16 3 V6"></path></svg>
+    </button>
+    <button onClick="{{ navStats }}" title="Progress" style="position:relative; width:48px; height:46px; border:none; background:transparent; border-radius:12px; display:grid; place-items:center; cursor:pointer; color:#c5c9d6;">
+      <sc-if value="{{ isStats }}"><div style="position:absolute; inset:0; background:rgba(123,123,255,.16); border-radius:12px;"></div><div style="position:absolute; left:-13px; top:12px; width:3px; height:22px; border-radius:2px; background:#7b7bff;"></div></sc-if>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="position:relative;"><path d="M4 20 V12 M10 20 V6 M16 20 V14 M21 20 H3"></path></svg>
+    </button>
+    <button onClick="{{ navSettings }}" title="Settings" style="position:relative; margin-top:auto; width:48px; height:46px; border:none; background:transparent; border-radius:12px; display:grid; place-items:center; cursor:pointer; color:#c5c9d6;">
+      <sc-if value="{{ isSettings }}"><div style="position:absolute; inset:0; background:rgba(123,123,255,.16); border-radius:12px;"></div><div style="position:absolute; left:-13px; top:12px; width:3px; height:22px; border-radius:2px; background:#7b7bff;"></div></sc-if>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="position:relative;"><circle cx="7" cy="8" r="2.3"></circle><path d="M11 8 H21 M3 8 H4.7"></path><circle cx="16" cy="16" r="2.3"></circle><path d="M3 16 H13 M18.3 16 H21"></path></svg>
+    </button>
+  </nav>
+
+  <!-- MAIN -->
+  <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
+    <!-- TOPBAR -->
+    <div style="height:58px; flex:none; display:flex; align-items:center; justify-content:space-between; padding:0 22px; border-bottom:1px solid #1b1f2c; background:#0f1117;">
+      <div style="display:flex; align-items:baseline; gap:11px; min-width:0;">
+        <span style="font:700 17px 'Space Grotesk';">{{ tabTitle }}</span>
+        <span style="font-size:13px; color:#6b7180; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ tabSub }}</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:11px; flex:none;">
+        <span style="font:500 12px 'JetBrains Mono'; color:#565c6b;">{{ clock }}</span>
+        <sc-if value="{{ paused }}"><button onClick="{{ togglePause }}" style="background:linear-gradient(150deg,#8b8bff,#5b5bf0); color:#fff; border:none; border-radius:9px; padding:8px 14px; font:600 13px 'Space Grotesk'; cursor:pointer;">Resume blocking</button></sc-if>
+        <sc-if value="{{ notPaused }}" hint-placeholder-val="{{ true }}"><button onClick="{{ togglePause }}" style="background:#1a1e29; color:#9aa0b0; border:1px solid #262b3a; border-radius:9px; padding:8px 14px; font:600 13px 'Space Grotesk'; cursor:pointer;">Pause</button></sc-if>
+        <button onClick="{{ startPanic }}" style="background:#ef4444; color:#fff; border:none; border-radius:9px; padding:8px 16px; font:700 13px 'Space Grotesk'; letter-spacing:.04em; cursor:pointer; box-shadow:0 4px 14px rgba(239,68,68,.4);">PANIC</button>
+        <div style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#404659,#262b3a); display:grid; place-items:center; font:700 13px 'Space Grotesk'; color:#c5c9d6;">M</div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div style="flex:1; overflow-y:auto; overflow-x:hidden;">
+
+      <!-- ===================== HOME ===================== -->
+      <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:980px; margin:0 auto; padding:22px; display:flex; flex-direction:column; gap:16px; animation:flUp .35s ease;">
+        <sc-if value="{{ notPaused }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex; align-items:center; gap:20px; background:linear-gradient(115deg,rgba(123,123,255,.20),rgba(123,123,255,.04)); border:1px solid rgba(123,123,255,.32); border-radius:16px; padding:20px 22px;">
+          <div style="width:54px; height:54px; border-radius:14px; background:linear-gradient(150deg,#8b8bff,#5b5bf0); display:grid; place-items:center; box-shadow:0 8px 22px rgba(123,123,255,.5); flex:none;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2 L20 5 V11 C20 16 16 20 12 22 C8 20 4 16 4 11 V5 Z"></path><path d="M9 12 l2 2 4-4.5"></path></svg></div>
+          <div style="flex:1; min-width:0;"><div style="font:700 19px 'Space Grotesk';">Protection active</div><div style="font-size:13.5px; color:#9aa0b0; margin-top:3px;">{{ armedSummary }}</div></div>
+          <div style="text-align:right; padding-left:20px; border-left:1px solid rgba(123,123,255,.22);"><div style="display:flex; align-items:baseline; gap:6px; justify-content:flex-end;"><span style="font:700 40px 'Space Grotesk'; line-height:1; color:#b9b9ff;">12</span><span style="font-size:18px;">🔥</span></div><div style="font-size:12px; color:#9aa0b0; margin-top:4px;">day streak · best 21</div></div>
+        </div>
+        </sc-if>
+        <sc-if value="{{ paused }}">
+        <div style="display:flex; align-items:center; gap:20px; background:linear-gradient(115deg,rgba(245,158,11,.18),rgba(245,158,11,.04)); border:1px solid rgba(245,158,11,.4); border-radius:16px; padding:20px 22px;">
+          <div style="width:54px; height:54px; border-radius:14px; background:rgba(245,158,11,.18); display:grid; place-items:center; flex:none;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f5b042" stroke-width="2.2" stroke-linecap="round"><path d="M9 5 V19 M15 5 V19"></path></svg></div>
+          <div style="flex:1;"><div style="font:700 19px 'Space Grotesk'; color:#f5b042;">Blocking paused</div><div style="font-size:13.5px; color:#c9a96a; margin-top:3px;">Nothing is being blocked right now. Resume when you're ready.</div></div>
+        </div>
+        </sc-if>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+          <div style="background:#171b26; border:1px solid #242a39; border-radius:13px; padding:15px 16px;"><div style="font:700 26px 'Space Grotesk';">34</div><div style="font-size:12px; color:#8b91a3; margin-top:4px;">resisted this week</div></div>
+          <div style="background:#171b26; border:1px solid #242a39; border-radius:13px; padding:15px 16px;"><div style="font:700 26px 'Space Grotesk';">218</div><div style="font-size:12px; color:#8b91a3; margin-top:4px;">total blocks</div></div>
+          <div style="background:#171b26; border:1px solid #242a39; border-radius:13px; padding:15px 16px;"><div style="font:700 26px 'Space Grotesk';">18.4<span style="font-size:15px; color:#8b91a3;">h</span></div><div style="font-size:12px; color:#8b91a3; margin-top:4px;">time reclaimed</div></div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1.15fr 1fr; gap:16px;">
+          <div style="background:#171b26; border:1px solid #242a39; border-radius:13px; padding:16px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;"><span style="font:600 14px 'Space Grotesk';">Locked apps</span><span onClick="{{ navApps }}" style="font-size:12px; color:#9b9bff; cursor:pointer;">Manage →</span></div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <sc-for list="{{ appsPreview }}" as="a" hint-placeholder-count="4">
+                <div style="display:flex; align-items:center; gap:11px; background:#1d2230; border:1px solid #2a3142; border-radius:10px; padding:9px 11px;"><div style="width:30px; height:30px; border-radius:8px; background:{{ a.iconBg }}; display:grid; place-items:center; font:700 11px 'Space Grotesk'; color:{{ a.iconColor }}; flex:none;">{{ a.init }}</div><span style="flex:1; font-size:13.5px;">{{ a.name }}</span><span style="font:600 10.5px 'Space Grotesk'; letter-spacing:.05em; color:{{ a.tagColor }}; background:{{ a.tagBg }}; border:1px solid {{ a.tagBorder }}; padding:2px 8px; border-radius:6px;">{{ a.tag }}</span></div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#171b26; border:1px solid #242a39; border-radius:13px; padding:16px;">
+            <div style="font:600 14px 'Space Grotesk'; margin-bottom:14px;">This week</div>
+            <div style="display:flex; align-items:flex-end; gap:9px; height:84px;">
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%;"><div style="flex:1; width:100%; display:flex; align-items:flex-end;"><div style="width:100%; height:42%; background:linear-gradient(180deg,#9b9bff,#6b6bf0); border-radius:5px 5px 0 0;"></div></div><span style="font-size:10px; color:#6b7180;">M</span></div>
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%;"><div style="flex:1; width:100%; display:flex; align-items:flex-end;"><div style="width:100%; height:68%; background:linear-gradient(180deg,#9b9bff,#6b6bf0); border-radius:5px 5px 0 0;"></div></div><span style="font-size:10px; color:#6b7180;">T</span></div>
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%;"><div style="flex:1; width:100%; display:flex; align-items:flex-end;"><div style="width:100%; height:30%; background:linear-gradient(180deg,#9b9bff,#6b6bf0); border-radius:5px 5px 0 0;"></div></div><span style="font-size:10px; color:#6b7180;">W</span></div>
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%;"><div style="flex:1; width:100%; display:flex; align-items:flex-end;"><div style="width:100%; height:88%; background:linear-gradient(180deg,#9b9bff,#6b6bf0); border-radius:5px 5px 0 0;"></div></div><span style="font-size:10px; color:#6b7180;">T</span></div>
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%;"><div style="flex:1; width:100%; display:flex; align-items:flex-end;"><div style="width:100%; height:100%; background:linear-gradient(180deg,#9b9bff,#6b6bf0); border-radius:5px 5px 0 0;"></div></div><span style="font-size:10px; color:#6b7180;">F</span></div>
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%;"><div style="flex:1; width:100%; display:flex; align-items:flex-end;"><div style="width:100%; height:55%; background:linear-gradient(180deg,#9b9bff,#6b6bf0); border-radius:5px 5px 0 0;"></div></div><span style="font-size:10px; color:#6b7180;">S</span></div>
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%;"><div style="flex:1; width:100%; display:flex; align-items:flex-end;"><div style="width:100%; height:20%; background:linear-gradient(180deg,#9b9bff,#6b6bf0); border-radius:5px 5px 0 0;"></div></div><span style="font-size:10px; color:#6b7180;">S</span></div>
+            </div>
+            <div style="height:1px; background:#242a39; margin:14px 0;"></div>
+            <div style="font-size:11px; color:#8b91a3; text-transform:uppercase; letter-spacing:.08em; margin-bottom:9px;">Recent blocks</div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div style="display:flex; justify-content:space-between; font-size:13px;"><span>Steam</span><span style="color:#6b7180;">7:14 PM</span></div>
+              <div style="display:flex; justify-content:space-between; font-size:13px;"><span>Epic Games</span><span style="color:#6b7180;">5:02 PM</span></div>
+              <div style="display:flex; justify-content:space-between; font-size:13px;"><span>store.steampowered.com</span><span style="color:#6b7180;">1:48 PM</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===================== APPS ===================== -->
+      <sc-if value="{{ isApps }}">
+      <div style="max-width:780px; margin:0 auto; padding:22px; display:flex; flex-direction:column; gap:18px; animation:flUp .35s ease;">
+        <div style="background:#171b26; border:1px solid #242a39; border-radius:14px; padding:18px;">
+          <div style="font:600 15px 'Space Grotesk'; margin-bottom:4px;">Add an app to block</div>
+          <div style="font-size:13px; color:#8b91a3; margin-bottom:14px;">Type an executable, browse for it, or pick from launchers we detected.</div>
+          <div style="display:flex; gap:8px; margin-bottom:10px;">
+            <input value="{{ newApp }}" onChange="{{ onNewApp }}" onKeyDown="{{ onNewAppKey }}" placeholder="e.g. steam.exe" style="flex:1; background:#0f1117; border:1px solid #2a3142; color:#e6e8ee; padding:10px 12px; border-radius:9px; font-size:14px; outline:none; font-family:inherit;" />
+            <button onClick="{{ addApp }}" style="background:linear-gradient(150deg,#8b8bff,#5b5bf0); color:#fff; border:none; border-radius:9px; padding:10px 18px; font:600 14px 'Space Grotesk'; cursor:pointer;">Add</button>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button onClick="{{ addLaunchers }}" style="background:#1a1e29; border:1px solid #262b3a; color:#c5c9d6; border-radius:9px; padding:9px 14px; font:600 13px 'Space Grotesk'; cursor:pointer;">＋ Game launchers</button>
+            <button onClick="{{ addRunning }}" style="background:#1a1e29; border:1px solid #262b3a; color:#c5c9d6; border-radius:9px; padding:9px 14px; font:600 13px 'Space Grotesk'; cursor:pointer;">＋ Running apps</button>
+          </div>
+        </div>
+
+        <div>
+          <div style="font:600 14px 'Space Grotesk'; margin-bottom:10px; color:#9aa0b0;">Blocked apps</div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <sc-for list="{{ apps }}" as="a" hint-placeholder-count="5">
+              <div style="background:#171b26; border:1px solid #242a39; border-radius:13px; padding:13px 15px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <div style="width:34px; height:34px; border-radius:9px; background:{{ a.iconBg }}; display:grid; place-items:center; font:700 12px 'Space Grotesk'; color:{{ a.iconColor }}; flex:none;">{{ a.init }}</div>
+                  <div style="flex:1; min-width:0;"><div style="font:600 14.5px 'Space Grotesk';">{{ a.name }}</div><div style="font-size:12px; color:#8b91a3; margin-top:1px;">{{ a.hint }}</div></div>
+                  <div style="display:inline-flex; border:1px solid #2a3142; border-radius:9px; overflow:hidden;">
+                    <sc-if value="{{ a.isAlways }}"><div style="background:#5b5bf0; color:#fff; padding:6px 12px; font:600 12px 'Space Grotesk';">Always</div></sc-if>
+                    <sc-if value="{{ a.notAlways }}"><button onClick="{{ a.onAlways }}" style="background:transparent; border:none; color:#8b91a3; padding:6px 12px; font:600 12px 'Space Grotesk'; cursor:pointer;">Always</button></sc-if>
+                    <sc-if value="{{ a.isSchedule }}"><div style="background:#5b5bf0; color:#fff; padding:6px 12px; font:600 12px 'Space Grotesk';">Schedule</div></sc-if>
+                    <sc-if value="{{ a.notSchedule }}"><button onClick="{{ a.onSchedule }}" style="background:transparent; border:none; color:#8b91a3; padding:6px 12px; font:600 12px 'Space Grotesk'; cursor:pointer;">Schedule</button></sc-if>
+                    <sc-if value="{{ a.isBudget }}"><div style="background:#5b5bf0; color:#fff; padding:6px 12px; font:600 12px 'Space Grotesk';">Limit</div></sc-if>
+                    <sc-if value="{{ a.notBudget }}"><button onClick="{{ a.onBudget }}" style="background:transparent; border:none; color:#8b91a3; padding:6px 12px; font:600 12px 'Space Grotesk'; cursor:pointer;">Limit</button></sc-if>
+                  </div>
+                  <button onClick="{{ a.onRemove }}" title="Remove" style="background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.3); color:#fca5a5; border-radius:8px; width:32px; height:32px; font-size:14px; cursor:pointer; flex:none;">✕</button>
+                </div>
+                <sc-if value="{{ a.isBudget }}">
+                  <div style="margin-top:11px; padding-top:11px; border-top:1px solid #242a39; display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:12.5px; color:#8b91a3;">Daily limit</span>
+                    <span style="font:700 13px 'JetBrains Mono'; color:#b9b9ff;">{{ a.limit }}m</span>
+                    <div style="flex:1; height:6px; background:#0f1117; border-radius:6px; overflow:hidden;"><div style="width:{{ a.usedPct }}; height:100%; background:#f5b042;"></div></div>
+                    <span style="font-size:12px; color:#8b91a3;">{{ a.usedLabel }}</span>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div>
+          <div style="font:600 14px 'Space Grotesk'; margin-bottom:6px; color:#9aa0b0;">Blocked folders</div>
+          <div style="font-size:12.5px; color:#8b91a3; margin-bottom:10px;">Blocks anything launched from inside a folder — e.g. a whole game library.</div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <sc-for list="{{ folders }}" as="f" hint-placeholder-count="1">
+              <div style="display:flex; align-items:center; gap:11px; background:#171b26; border:1px solid #242a39; border-radius:11px; padding:11px 13px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b91a3" stroke-width="2" stroke-linejoin="round"><path d="M3 7 a1 1 0 0 1 1-1 h5 l2 2 h8 a1 1 0 0 1 1 1 V18 a1 1 0 0 1 -1 1 H4 a1 1 0 0 1 -1 -1 Z"></path></svg><span style="flex:1; font:500 13px 'JetBrains Mono'; color:#c5c9d6;">{{ f.path }}</span><button onClick="{{ f.onRemove }}" style="background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.3); color:#fca5a5; border-radius:8px; width:30px; height:30px; font-size:13px; cursor:pointer;">✕</button></div>
+            </sc-for>
+            <button onClick="{{ addFolder }}" style="align-self:flex-start; background:#1a1e29; border:1px dashed #2a3142; color:#9aa0b0; border-radius:10px; padding:10px 16px; font:600 13px 'Space Grotesk'; cursor:pointer;">＋ Add folder…</button>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===================== SITES ===================== -->
+      <sc-if value="{{ isSites }}">
+      <div style="max-width:680px; margin:0 auto; padding:22px; display:flex; flex-direction:column; gap:18px; animation:flUp .35s ease;">
+        <div style="background:#171b26; border:1px solid #242a39; border-radius:14px; padding:18px;">
+          <div style="font:600 15px 'Space Grotesk'; margin-bottom:4px;">Block a website</div>
+          <div style="font-size:13px; color:#8b91a3; margin-bottom:14px;">Works across Chrome, Edge &amp; Firefox. Adding or removing one shows a quick Windows admin prompt.</div>
+          <div style="display:flex; gap:8px;">
+            <input value="{{ newSite }}" onChange="{{ onNewSite }}" onKeyDown="{{ onNewSiteKey }}" placeholder="e.g. reddit.com" style="flex:1; background:#0f1117; border:1px solid #2a3142; color:#e6e8ee; padding:10px 12px; border-radius:9px; font-size:14px; outline:none; font-family:inherit;" />
+            <button onClick="{{ addSite }}" style="background:linear-gradient(150deg,#8b8bff,#5b5bf0); color:#fff; border:none; border-radius:9px; padding:10px 18px; font:600 14px 'Space Grotesk'; cursor:pointer;">Block</button>
+          </div>
+        </div>
+        <div>
+          <div style="font:600 14px 'Space Grotesk'; margin-bottom:10px; color:#9aa0b0;">Blocked websites</div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <sc-for list="{{ sites }}" as="s" hint-placeholder-count="3">
+              <div style="display:flex; align-items:center; gap:11px; background:#171b26; border:1px solid #242a39; border-radius:11px; padding:11px 13px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7fb0d6" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M3 12 H21 M12 3 C15 6.5 15 17.5 12 21 C9 17.5 9 6.5 12 3"></path></svg><span style="flex:1; font:500 13.5px 'JetBrains Mono'; color:#c5c9d6;">{{ s.domain }}</span><button onClick="{{ s.onRemove }}" style="background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.3); color:#fca5a5; border-radius:8px; width:30px; height:30px; font-size:13px; cursor:pointer;">✕</button></div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===================== SCHEDULE ===================== -->
+      <sc-if value="{{ isSchedule }}">
+      <div style="max-width:680px; margin:0 auto; padding:22px; display:flex; flex-direction:column; gap:18px; animation:flUp .35s ease;">
+        <div style="font-size:13.5px; color:#8b91a3;">When apps set to <strong style="color:#c5c9d6;">Schedule</strong> mode are blocked. Outside these hours they're free.</div>
+        <div style="display:inline-flex; align-self:flex-start; border:1px solid #2a3142; border-radius:9px; overflow:hidden;">
+          <sc-if value="{{ schedWeekdays }}" hint-placeholder-val="{{ true }}"><div style="background:#5b5bf0; color:#fff; padding:8px 16px; font:600 13px 'Space Grotesk';">Weekdays 9–5</div></sc-if>
+          <sc-if value="{{ schedCustom }}"><button onClick="{{ setWeekdays }}" style="background:transparent; border:none; color:#8b91a3; padding:8px 16px; font:600 13px 'Space Grotesk'; cursor:pointer;">Weekdays 9–5</button></sc-if>
+          <sc-if value="{{ schedCustom }}"><div style="background:#5b5bf0; color:#fff; padding:8px 16px; font:600 13px 'Space Grotesk';">Custom</div></sc-if>
+          <sc-if value="{{ schedWeekdays }}" hint-placeholder-val="{{ true }}"><button onClick="{{ setCustom }}" style="background:transparent; border:none; color:#8b91a3; padding:8px 16px; font:600 13px 'Space Grotesk'; cursor:pointer;">Custom</button></sc-if>
+        </div>
+        <div style="background:#171b26; border:1px solid #242a39; border-radius:14px; padding:8px;">
+          <sc-for list="{{ schedDays }}" as="d" hint-placeholder-count="7">
+            <div style="display:flex; align-items:center; gap:14px; padding:11px 12px; border-bottom:1px solid #1d2230;">
+              <button onClick="{{ d.onToggle }}" style="width:42px; height:24px; border-radius:999px; border:none; cursor:pointer; padding:0; position:relative; flex:none; background:{{ d.trackBg }};"><span style="position:absolute; top:3px; left:{{ d.knobLeft }}; width:18px; height:18px; border-radius:50%; background:#fff; transition:left .15s;"></span></button>
+              <span style="width:38px; font:600 13px 'Space Grotesk'; color:{{ d.labelColor }};">{{ d.name }}</span>
+              <sc-if value="{{ d.on }}"><span style="font:500 13px 'JetBrains Mono'; color:#c5c9d6;">09:00 — 17:00</span></sc-if>
+              <sc-if value="{{ d.off }}"><span style="font-size:13px; color:#565c6b;">Not blocked</span></sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===================== STATS ===================== -->
+      <sc-if value="{{ isStats }}">
+      <div style="max-width:880px; margin:0 auto; padding:22px; display:flex; flex-direction:column; gap:18px; animation:flUp .35s ease;">
+        <div style="display:flex; align-items:center; gap:24px; background:linear-gradient(115deg,rgba(123,123,255,.18),rgba(123,123,255,.03)); border:1px solid rgba(123,123,255,.3); border-radius:16px; padding:24px;">
+          <div style="text-align:center;"><div style="display:flex; align-items:baseline; gap:7px;"><span style="font:700 56px 'Space Grotesk'; line-height:1; color:#b9b9ff;">12</span><span style="font-size:24px;">🔥</span></div><div style="font-size:13px; color:#9aa0b0; margin-top:6px;">day streak</div></div>
+          <div style="flex:1; padding-left:24px; border-left:1px solid rgba(123,123,255,.22);">
+            <div style="font:600 14px 'Space Grotesk'; margin-bottom:8px;">Next milestone: 14-day streak</div>
+            <div style="height:8px; background:#0f1117; border-radius:6px; overflow:hidden; margin-bottom:6px;"><div style="width:85%; height:100%; background:linear-gradient(90deg,#9b9bff,#5b5bf0);"></div></div>
+            <div style="font-size:12.5px; color:#8b91a3;">2 days to go — your best is 21. Beat it.</div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+          <div style="background:#171b26; border:1px solid #242a39; border-radius:13px; padding:16px;"><div style="font:700 26px 'Space Grotesk';">34</div><div style="font-size:12px; color:#8b91a3; margin-top:4px;">resisted this week</div></div>
+          <div style="background:#171b26; border:1px solid #242a39; border-radius:13px; padding:16px;"><div style="font:700 26px 'Space Grotesk';">218</div><div style="font-size:12px; color:#8b91a3; margin-top:4px;">blocks all-time</div></div>
+          <div style="background:#171b26; border:1px solid #242a39; border-radius:13px; padding:16px;"><div style="font:700 26px 'Space Grotesk';">18.4<span style="font-size:15px; color:#8b91a3;">h</span></div><div style="font-size:12px; color:#8b91a3; margin-top:4px;">time reclaimed</div></div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div style="background:#171b26; border:1px solid #242a39; border-radius:13px; padding:18px;">
+            <div style="font:600 14px 'Space Grotesk'; margin-bottom:14px;">Most resisted</div>
+            <div style="display:flex; flex-direction:column; gap:11px;">
+              <div><div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:5px;"><span>Steam</span><span style="color:#8b91a3;">88×</span></div><div style="height:6px; background:#0f1117; border-radius:6px; overflow:hidden;"><div style="width:100%; height:100%; background:#7b7bff;"></div></div></div>
+              <div><div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:5px;"><span>Epic Games</span><span style="color:#8b91a3;">54×</span></div><div style="height:6px; background:#0f1117; border-radius:6px; overflow:hidden;"><div style="width:61%; height:100%; background:#7b7bff;"></div></div></div>
+              <div><div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:5px;"><span>Battle.net</span><span style="color:#8b91a3;">39×</span></div><div style="height:6px; background:#0f1117; border-radius:6px; overflow:hidden;"><div style="width:44%; height:100%; background:#7b7bff;"></div></div></div>
+              <div><div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:5px;"><span>store.steampowered.com</span><span style="color:#8b91a3;">22×</span></div><div style="height:6px; background:#0f1117; border-radius:6px; overflow:hidden;"><div style="width:25%; height:100%; background:#7b7bff;"></div></div></div>
+            </div>
+          </div>
+          <div style="background:#171b26; border:1px solid #242a39; border-radius:13px; padding:18px;">
+            <div style="font:600 14px 'Space Grotesk'; margin-bottom:14px;">Badges</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <div style="background:#1d2230; border:1px solid #2a3142; border-radius:11px; padding:12px; text-align:center;"><div style="font-size:22px;">🛡️</div><div style="font:600 12px 'Space Grotesk'; margin-top:5px;">First day</div><div style="font-size:10.5px; color:#7ee0a0; margin-top:2px;">Earned</div></div>
+              <div style="background:#1d2230; border:1px solid #2a3142; border-radius:11px; padding:12px; text-align:center;"><div style="font-size:22px;">🔥</div><div style="font:600 12px 'Space Grotesk'; margin-top:5px;">7-day streak</div><div style="font-size:10.5px; color:#7ee0a0; margin-top:2px;">Earned</div></div>
+              <div style="background:#1d2230; border:1px solid #2a3142; border-radius:11px; padding:12px; text-align:center; opacity:.5;"><div style="font-size:22px;">⚔️</div><div style="font:600 12px 'Space Grotesk'; margin-top:5px;">14-day streak</div><div style="font-size:10.5px; color:#8b91a3; margin-top:2px;">2 days away</div></div>
+              <div style="background:#1d2230; border:1px solid #2a3142; border-radius:11px; padding:12px; text-align:center; opacity:.5;"><div style="font-size:22px;">👑</div><div style="font:600 12px 'Space Grotesk'; margin-top:5px;">30-day reset</div><div style="font-size:10.5px; color:#8b91a3; margin-top:2px;">Locked</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ===================== SETTINGS ===================== -->
+      <sc-if value="{{ isSettings }}">
+      <div style="max-width:680px; margin:0 auto; padding:22px; display:flex; flex-direction:column; gap:16px; animation:flUp .35s ease;">
+        <div style="background:#171b26; border:1px solid #242a39; border-radius:14px; padding:18px;">
+          <div style="font:600 15px 'Space Grotesk'; margin-bottom:4px;">Unlock challenge</div>
+          <div style="font-size:13px; color:#8b91a3; margin-bottom:14px;">What you must type to weaken a block while it's enforcing. Friction is the feature.</div>
+          <div style="display:inline-flex; border:1px solid #2a3142; border-radius:9px; overflow:hidden; flex-wrap:wrap;">
+            <sc-if value="{{ chWordsSel }}" hint-placeholder-val="{{ true }}"><div style="background:#5b5bf0; color:#fff; padding:7px 14px; font:600 12.5px 'Space Grotesk';">Random words</div></sc-if>
+            <sc-if value="{{ chWordsNot }}"><button onClick="{{ setChWords }}" style="background:transparent; border:none; color:#8b91a3; padding:7px 14px; font:600 12.5px 'Space Grotesk'; cursor:pointer;">Random words</button></sc-if>
+            <sc-if value="{{ chCharsSel }}"><div style="background:#5b5bf0; color:#fff; padding:7px 14px; font:600 12.5px 'Space Grotesk';">Characters</div></sc-if>
+            <sc-if value="{{ chCharsNot }}" hint-placeholder-val="{{ true }}"><button onClick="{{ setChChars }}" style="background:transparent; border:none; color:#8b91a3; padding:7px 14px; font:600 12.5px 'Space Grotesk'; cursor:pointer;">Characters</button></sc-if>
+            <sc-if value="{{ chTimerSel }}"><div style="background:#5b5bf0; color:#fff; padding:7px 14px; font:600 12.5px 'Space Grotesk';">Timer</div></sc-if>
+            <sc-if value="{{ chTimerNot }}" hint-placeholder-val="{{ true }}"><button onClick="{{ setChTimer }}" style="background:transparent; border:none; color:#8b91a3; padding:7px 14px; font:600 12.5px 'Space Grotesk'; cursor:pointer;">Timer</button></sc-if>
+          </div>
+          <div style="margin-top:13px; display:flex; align-items:center; gap:10px;">
+            <span style="font-size:13px; color:#8b91a3;">{{ chFieldLabel }}</span>
+            <input value="{{ chWords }}" onChange="{{ onChWords }}" type="number" style="width:70px; background:#0f1117; border:1px solid #2a3142; color:#e6e8ee; padding:7px 9px; border-radius:8px; font-size:14px; outline:none; font-family:'JetBrains Mono';" />
+          </div>
+        </div>
+
+        <div style="background:#171b26; border:1px solid #242a39; border-radius:14px; padding:18px; display:flex; align-items:center; justify-content:space-between; gap:14px;">
+          <div><div style="font:600 15px 'Space Grotesk';">Stay-on protection</div><div style="font-size:13px; color:#8b91a3; margin-top:3px;">{{ protectionDesc }}</div></div>
+          <sc-if value="{{ protection }}" hint-placeholder-val="{{ true }}"><button onClick="{{ toggleProtection }}" style="background:#1a1e29; border:1px solid #262b3a; color:#c5c9d6; border-radius:9px; padding:9px 16px; font:600 13px 'Space Grotesk'; cursor:pointer; flex:none;">Turn off</button></sc-if>
+          <sc-if value="{{ notProtection }}"><button onClick="{{ toggleProtection }}" style="background:linear-gradient(150deg,#8b8bff,#5b5bf0); border:none; color:#fff; border-radius:9px; padding:9px 16px; font:600 13px 'Space Grotesk'; cursor:pointer; flex:none;">Turn on</button></sc-if>
+        </div>
+
+        <div style="background:#171b26; border:1px solid #242a39; border-radius:14px; padding:18px;">
+          <div style="font:600 15px 'Space Grotesk'; margin-bottom:4px;">Panic mode</div>
+          <div style="font-size:13px; color:#8b91a3; margin-bottom:14px;">One-tap lockdown for when you're about to relapse. Blocks everything and walks you through a breather — can't be cancelled early.</div>
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;"><input value="{{ panicMin }}" onChange="{{ onPanicMin }}" type="number" style="width:64px; background:#0f1117; border:1px solid #2a3142; color:#e6e8ee; padding:7px 9px; border-radius:8px; font-size:14px; outline:none; font-family:'JetBrains Mono';" /><span style="font-size:13px; color:#8b91a3;">minute lockdown</span></div>
+          <div style="font-size:12.5px; color:#8b91a3; margin-bottom:6px;">Your mantra</div>
+          <textarea value="{{ mantra }}" onChange="{{ onMantra }}" style="width:100%; min-height:64px; background:#0f1117; border:1px solid #2a3142; color:#e6e8ee; padding:11px; border-radius:10px; font-size:14px; line-height:1.5; outline:none; resize:vertical; font-family:inherit;"></textarea>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+          <button onClick="{{ previewLockout }}" style="flex:1; background:#1a1e29; border:1px solid #262b3a; color:#c5c9d6; border-radius:11px; padding:13px; font:600 13.5px 'Space Grotesk'; cursor:pointer;">Preview block screen</button>
+          <button onClick="{{ replayOnboarding }}" style="flex:1; background:#1a1e29; border:1px solid #262b3a; color:#c5c9d6; border-radius:11px; padding:13px; font:600 13.5px 'Space Grotesk'; cursor:pointer;">Replay setup walkthrough</button>
+        </div>
+
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <div style="display:flex; gap:10px;"><button onClick="{{ sendFeedback }}" style="background:transparent; border:1px solid #262b3a; color:#8b91a3; border-radius:9px; padding:9px 14px; font:600 13px 'Space Grotesk'; cursor:pointer;">Send feedback</button><button onClick="{{ openLogs }}" style="background:transparent; border:1px solid #262b3a; color:#8b91a3; border-radius:9px; padding:9px 14px; font:600 13px 'Space Grotesk'; cursor:pointer;">Open logs</button></div>
+          <span style="font:500 12px 'JetBrains Mono'; color:#565c6b;">FocusLock v0.9.1</span>
+        </div>
+      </div>
+      </sc-if>
+
+    </div>
+  </div>
+</div>
+
+<!-- ===================== TOAST ===================== -->
+<sc-if value="{{ noticeShown }}">
+<div style="position:fixed; top:16px; left:50%; transform:translateX(-50%); background:linear-gradient(150deg,#8b8bff,#5b5bf0); color:#fff; padding:10px 18px; border-radius:11px; font:600 13.5px 'Space Grotesk'; z-index:200; box-shadow:0 10px 30px rgba(0,0,0,.45); animation:flUp .25s ease;">{{ notice }}</div>
+</sc-if>
+
+<!-- ===================== CHALLENGE ===================== -->
+<sc-if value="{{ chOpen }}">
+<div style="position:fixed; inset:0; background:rgba(6,7,12,.72); backdrop-filter:blur(3px); display:grid; place-items:center; z-index:300; padding:20px;">
+  <div style="width:min(600px,94vw); background:#171b26; border:1px solid #2a3142; border-radius:16px; padding:24px; box-shadow:0 24px 70px rgba(0,0,0,.55); animation:flUp .25s ease;">
+    <div style="font:700 18px 'Space Grotesk';">Unlock challenge</div>
+    <div style="font-size:13.5px; color:#9aa0b0; margin-top:5px;">{{ chLabel }}. Type the text below exactly to continue.</div>
+    <div style="margin-top:16px; padding:14px; background:#0f1117; border:1px solid #242a39; border-radius:11px; font:500 15px/1.7 'JetBrains Mono'; user-select:none; overflow-wrap:anywhere;"><span style="color:#5ee08f;">{{ chDone }}</span><span style="color:#6b7180;">{{ chRest }}</span></div>
+    <textarea value="{{ chTyped }}" onChange="{{ onChallengeInput }}" autofocus placeholder="Type it here…" style="width:100%; min-height:80px; margin-top:12px; background:#0f1117; border:1px solid #2a3142; color:#e6e8ee; border-radius:11px; padding:12px; font:500 15px/1.6 'JetBrains Mono'; outline:none; resize:none;"></textarea>
+    <div style="height:6px; background:#0f1117; border-radius:6px; margin-top:12px; overflow:hidden;"><div style="width:{{ chPct }}; height:100%; background:#5ee08f; transition:width .1s;"></div></div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
+      <span style="font:500 12px 'JetBrains Mono'; color:#6b7180;">{{ chProgressLabel }}</span>
+      <div style="display:flex; gap:10px;">
+        <button onClick="{{ cancelChallenge }}" style="background:transparent; border:1px solid #2a3142; color:#9aa0b0; border-radius:9px; padding:10px 18px; font:600 13px 'Space Grotesk'; cursor:pointer;">Never mind</button>
+        <sc-if value="{{ chValid }}"><button onClick="{{ submitChallenge }}" style="background:linear-gradient(150deg,#8b8bff,#5b5bf0); border:none; color:#fff; border-radius:9px; padding:10px 20px; font:600 13px 'Space Grotesk'; cursor:pointer;">Continue →</button></sc-if>
+        <sc-if value="{{ chInvalid }}" hint-placeholder-val="{{ true }}"><div style="background:#1a1e29; border:1px solid #262b3a; color:#565c6b; border-radius:9px; padding:10px 20px; font:600 13px 'Space Grotesk';">Continue →</div></sc-if>
+      </div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ===================== LOCKOUT ===================== -->
+<sc-if value="{{ lockout }}">
+<div style="position:fixed; inset:0; z-index:400; background:radial-gradient(circle at 50% 34%, #1a1a3a, #0a0b14 72%); display:grid; place-items:center; text-align:center; animation:flUp .3s ease;">
+  <div style="max-width:560px; padding:24px;">
+    <div style="width:72px; height:72px; border-radius:20px; background:linear-gradient(150deg,#8b8bff,#5b5bf0); display:grid; place-items:center; margin:0 auto 22px; box-shadow:0 10px 34px rgba(123,123,255,.55);"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2 L20 5 V11 C20 16 16 20 12 22 C8 20 4 16 4 11 V5 Z"></path><path d="M9.5 12 l2 2 3.5-4"></path></svg></div>
+    <div style="font:700 13px 'Space Grotesk'; letter-spacing:.18em; color:#9b9bff; margin-bottom:10px;">BLOCKED · STEAM CLOSED</div>
+    <div style="font:700 26px 'Space Grotesk'; line-height:1.25; margin-bottom:14px; color:#fff;">Not right now. You've got this.</div>
+    <div style="font-size:15px; line-height:1.6; color:#aab0c0; margin-bottom:26px;">You're <strong style="color:#b9b9ff;">12 days strong</strong> — that's real progress. Don't trade it for twenty minutes you won't remember tomorrow.</div>
+    <div style="display:flex; gap:12px; justify-content:center;">
+      <button onClick="{{ closeLockout }}" style="background:linear-gradient(150deg,#8b8bff,#5b5bf0); color:#fff; border:none; border-radius:11px; padding:13px 26px; font:700 14px 'Space Grotesk'; cursor:pointer; box-shadow:0 8px 22px rgba(123,123,255,.4);">I'm good — close this</button>
+      <button onClick="{{ lockoutUnlock }}" style="background:rgba(255,255,255,.04); color:#9aa0b0; border:1px solid #2a3142; border-radius:11px; padding:13px 22px; font:600 14px 'Space Grotesk'; cursor:pointer;">Unlock anyway</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ===================== PANIC ===================== -->
+<sc-if value="{{ panic }}">
+<div style="position:fixed; inset:0; z-index:500; background:radial-gradient(circle at 50% 38%, #1b2440, #0a0c14 72%); display:grid; place-items:center; text-align:center; animation:flUp .4s ease;">
+  <div style="max-width:540px; padding:24px;">
+    <div style="position:relative; width:220px; height:220px; display:grid; place-items:center; margin:0 auto 20px;">
+      <div style="position:absolute; width:200px; height:200px; border-radius:50%; background:radial-gradient(circle, rgba(123,123,255,.55), rgba(123,123,255,.1)); animation:flBreathe 5s ease-in-out infinite;"></div>
+      <div style="position:relative; font:600 19px 'Space Grotesk'; color:#fff; z-index:1;">Breathe</div>
+    </div>
+    <div style="font:700 22px 'Space Grotesk'; color:#fff; margin-bottom:12px;">This feeling will pass.</div>
+    <div style="font-size:16px; line-height:1.6; color:#b6bccc; max-width:440px; margin:0 auto 22px;">{{ mantra }}</div>
+    <div style="font:700 40px 'JetBrains Mono'; color:#b9b9ff; letter-spacing:2px;">{{ panicLeft }}</div>
+    <div style="font-size:13px; color:#7a8090; margin-top:8px;">Lockdown can't be cancelled early — that's the point.</div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ===================== ONBOARDING ===================== -->
+<sc-if value="{{ onboarding }}">
+<div style="position:fixed; inset:0; z-index:600; background:#0b0d13; display:grid; place-items:center; padding:24px; animation:flUp .3s ease;">
+  <div style="width:min(620px,95vw); background:#171b26; border:1px solid #242a39; border-radius:20px; padding:34px;">
+    <div style="display:flex; gap:6px; justify-content:center; margin-bottom:26px;">
+      <sc-for list="{{ onbDots }}" as="dot" hint-placeholder-count="6">
+        <span style="height:8px; border-radius:4px; transition:all .2s; width:{{ dot.w }}; background:{{ dot.bg }};"></span>
+      </sc-for>
+    </div>
+
+    <sc-if value="{{ onbS0 }}" hint-placeholder-val="{{ true }}">
+    <div style="text-align:center;"><div style="font-size:46px; margin-bottom:8px;">👋</div><div style="font:700 25px 'Space Grotesk'; margin-bottom:14px;">Welcome to FocusLock.</div><div style="font-size:15.5px; line-height:1.65; color:#aab0c0;">Deciding to take back control from gaming takes real guts — and you've already started. This tool is going to be a powerful ally in your corner. Let's set it up together.</div></div>
+    </sc-if>
+    <sc-if value="{{ onbS1 }}">
+    <div><div style="font:700 24px 'Space Grotesk'; margin-bottom:12px;">First — what should we call you?</div><input value="{{ onbName }}" onChange="{{ onOnbName }}" placeholder="Your name" style="width:100%; background:#0f1117; border:1px solid #2a3142; color:#e6e8ee; padding:13px 15px; border-radius:11px; font-size:16px; outline:none; font-family:inherit;" /></div>
+    </sc-if>
+    <sc-if value="{{ onbS2 }}">
+    <div><div style="font:700 24px 'Space Grotesk'; margin-bottom:8px;">Nice to meet you, {{ who }}.</div><div style="font-size:14.5px; color:#aab0c0; margin-bottom:16px;">Here's what we found on your machine. Pick the launchers you want to lock down.</div>
+      <div style="display:flex; flex-direction:column; gap:9px; max-height:280px; overflow-y:auto; overflow-x:hidden;">
+        <sc-for list="{{ onbLaunchers }}" as="g" hint-placeholder-count="5">
+          <button onClick="{{ g.onToggle }}" style="display:flex; align-items:center; gap:12px; text-align:left; background:{{ g.bg }}; border:1px solid {{ g.border }}; border-radius:12px; padding:13px 15px; color:#e6e8ee; cursor:pointer;">
+            <span style="width:22px; height:22px; flex:none; border-radius:7px; border:1px solid {{ g.checkBorder }}; display:grid; place-items:center; color:#b9b9ff; font-size:13px; font-weight:700; background:{{ g.checkBg }};">{{ g.check }}</span>
+            <span style="font:600 14.5px 'Space Grotesk';">{{ g.label }}</span>
+            <span style="margin-left:auto; font:500 12px 'JetBrains Mono'; color:#6b7180;">{{ g.exe }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+    <sc-if value="{{ onbS3 }}">
+    <div><div style="font:700 24px 'Space Grotesk'; margin-bottom:10px;">How far do you want to go, {{ who }}?</div><div style="font-size:14.5px; line-height:1.6; color:#aab0c0; margin-bottom:16px;">For a real reset, I'd block these completely — give yourself a clean 30 days. But if you need some access, a schedule works too.</div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <button onClick="{{ onbSetAlways }}" style="text-align:left; background:{{ onbAlwaysBg }}; border:1px solid {{ onbAlwaysBorder }}; border-radius:13px; padding:16px; color:#e6e8ee; cursor:pointer;"><div style="font:700 15.5px 'Space Grotesk';">Block completely</div><div style="font-size:13px; color:#8b91a3; margin-top:3px;">Recommended · blocked 24/7</div></button>
+        <button onClick="{{ onbSetSchedule }}" style="text-align:left; background:{{ onbSchedBg }}; border:1px solid {{ onbSchedBorder }}; border-radius:13px; padding:16px; color:#e6e8ee; cursor:pointer;"><div style="font:700 15.5px 'Space Grotesk';">On a schedule</div><div style="font-size:13px; color:#8b91a3; margin-top:3px;">We'll start you on weekdays 9–5 — tweak it anytime</div></button>
+      </div>
+    </div>
+    </sc-if>
+    <sc-if value="{{ onbS4 }}">
+    <div style="text-align:center;"><div style="font-size:46px; margin-bottom:8px;">💪</div><div style="font:700 25px 'Space Grotesk'; margin-bottom:14px;">That's it, {{ who }}. You're set.</div><div style="font-size:15.5px; line-height:1.65; color:#aab0c0;">FocusLock is in your corner now. Change anything from the dashboard, and if you ever need to slam the door shut fast, the <strong style="color:#b9b9ff;">Panic</strong> button is always up top.</div></div>
+    </sc-if>
+
+    <div style="display:flex; justify-content:space-between; gap:10px; margin-top:28px;">
+      <sc-if value="{{ onbCanBack }}"><button onClick="{{ onbBack }}" style="background:transparent; border:1px solid #2a3142; color:#9aa0b0; border-radius:10px; padding:11px 20px; font:600 14px 'Space Grotesk'; cursor:pointer;">Back</button></sc-if>
+      <sc-if value="{{ onbNoBack }}" hint-placeholder-val="{{ true }}"><span></span></sc-if>
+      <sc-if value="{{ onbNotLast }}" hint-placeholder-val="{{ true }}"><button onClick="{{ onbNext }}" style="background:linear-gradient(150deg,#8b8bff,#5b5bf0); border:none; color:#fff; border-radius:10px; padding:11px 24px; font:600 14px 'Space Grotesk'; cursor:pointer;">Continue →</button></sc-if>
+      <sc-if value="{{ onbLast }}"><button onClick="{{ onbFinish }}" style="background:linear-gradient(150deg,#8b8bff,#5b5bf0); border:none; color:#fff; border-radius:10px; padding:11px 24px; font:600 14px 'Space Grotesk'; cursor:pointer;">Enter FocusLock →</button></sc-if>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  CH = 'harbor velvet anchor drift copper meadow signal pivot lantern tunnel orchard ember';
+  state = {
+    tab: 'home', clock: '',
+    paused: false, protection: true,
+    panic: false, panicEnds: 0, panicLeft: '05:00', panicMin: 5,
+    ch: null,
+    lockout: false,
+    onboarding: false, onbStep: 0, onbName: 'Marcus', onbMode: 'always', onbPicks: {},
+    notice: '',
+    newApp: '', newSite: '',
+    chType: 'words', chWords: 12,
+    mantra: "This urge is temporary. What I'm building is not.",
+    apps: [
+      { name: 'Steam', mode: 'always' },
+      { name: 'Epic Games', mode: 'always' },
+      { name: 'Battle.net', mode: 'schedule' },
+      { name: 'Xbox', mode: 'budget', limit: 120, used: 95 },
+      { name: 'Riot Client', mode: 'always' }
+    ],
+    sites: ['store.steampowered.com', 'twitch.tv', 'reddit.com/r/gaming'],
+    folders: ['D:\\Games'],
+    sched: { Mon: true, Tue: true, Wed: true, Thu: true, Fri: true, Sat: false, Sun: false }
+  };
+
+  componentDidMount() {
+    this._t = setInterval(() => {
+      const now = new Date();
+      const clock = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      let extra = {};
+      if (this.state.panic) {
+        const ms = this.state.panicEnds - Date.now();
+        if (ms <= 0) extra = { panic: false, panicLeft: '00:00' };
+        else {
+          const s = Math.ceil(ms / 1000);
+          extra = { panicLeft: `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}` };
+        }
+      }
+      this.setState({ clock, ...extra });
+    }, 500);
+  }
+  componentWillUnmount() { clearInterval(this._t); }
+
+  flash(msg) {
+    this.setState({ notice: msg });
+    clearTimeout(this._n);
+    this._n = setTimeout(() => this.setState({ notice: '' }), 3200);
+  }
+
+  nav = (tab) => this.setState({ tab });
+  togglePause = () => { const p = !this.state.paused; this.setState({ paused: p }); this.flash(p ? 'Blocking paused.' : 'Blocking resumed.'); };
+
+  startPanic = () => this.setState({ panic: true, panicEnds: Date.now() + this.state.panicMin * 60000, panicLeft: `${String(this.state.panicMin).padStart(2, '0')}:00` });
+
+  setMode = (name, mode) => this.setState((s) => ({ apps: s.apps.map((a) => a.name === name ? { ...a, mode } : a) }));
+
+  chTarget() { return this.CH.split(' ').slice(0, Math.max(1, Math.min(12, this.state.chWords))).join(' '); }
+  openChallenge(label, onOk) { this.setState({ ch: { label, typed: '', onOk } }); }
+  onChallengeInput = (e) => { const v = e.target.value; this.setState((s) => ({ ch: { ...s.ch, typed: v } })); };
+  cancelChallenge = () => this.setState({ ch: null });
+  submitChallenge = () => { const ch = this.state.ch; this.setState({ ch: null }); if (ch && ch.onOk) ch.onOk(); };
+
+  askRemove = (name) => this.openChallenge(`Removing ${name}`, () => { this.setState((s) => ({ apps: s.apps.filter((a) => a.name !== name) })); this.flash(`${name} removed.`); });
+
+  addApp = () => {
+    const n = this.state.newApp.trim();
+    if (!n) return;
+    if (this.state.apps.some((a) => a.name.toLowerCase() === n.toLowerCase())) { this.flash('Already blocked.'); this.setState({ newApp: '' }); return; }
+    this.setState((s) => ({ apps: [...s.apps, { name: n, mode: 'always' }], newApp: '' }));
+    this.flash(`Blocking ${n}.`);
+  };
+  onNewApp = (e) => this.setState({ newApp: e.target.value });
+  onNewAppKey = (e) => { if (e.key === 'Enter') this.addApp(); };
+  addLaunchers = () => this.flash('Detected launchers added to your blocklist.');
+  addRunning = () => this.flash('Pick from running apps — opens a picker.');
+  addFolder = () => this.flash('Choose a folder to block its whole library.');
+
+  addSite = () => {
+    const d = this.state.newSite.trim().replace(/^https?:\/\//, '');
+    if (!d) return;
+    if (this.state.sites.includes(d)) { this.flash('Already blocked.'); this.setState({ newSite: '' }); return; }
+    this.setState((s) => ({ sites: [...s.sites, d], newSite: '' }));
+    this.flash(`Blocking ${d}.`);
+  };
+  onNewSite = (e) => this.setState({ newSite: e.target.value });
+  onNewSiteKey = (e) => { if (e.key === 'Enter') this.addSite(); };
+  removeSite = (d) => this.openChallenge(`Unblocking ${d}`, () => { this.setState((s) => ({ sites: s.sites.filter((x) => x !== d) })); this.flash(`${d} unblocked.`); });
+  removeFolder = (p) => this.setState((s) => ({ folders: s.folders.filter((x) => x !== p) }));
+
+  setWeekdays = () => this.setState({ sched: { Mon: true, Tue: true, Wed: true, Thu: true, Fri: true, Sat: false, Sun: false } });
+  setCustom = () => this.forceUpdate();
+  toggleDay = (d) => this.setState((s) => ({ sched: { ...s.sched, [d]: !s.sched[d] } }));
+
+  setChWords = () => this.setState({ chType: 'words' });
+  setChChars = () => this.setState({ chType: 'chars' });
+  setChTimer = () => this.setState({ chType: 'timer' });
+  onChWords = (e) => this.setState({ chWords: Number(e.target.value) || 1 });
+  onPanicMin = (e) => this.setState({ panicMin: Number(e.target.value) || 1 });
+  onMantra = (e) => this.setState({ mantra: e.target.value });
+
+  toggleProtection = () => {
+    if (this.state.protection) this.openChallenge('Turning off Stay-on protection', () => { this.setState({ protection: false }); this.flash('Protection off.'); });
+    else { this.setState({ protection: true }); this.flash('Protection on — starts on login.'); }
+  };
+
+  previewLockout = () => this.setState({ lockout: true });
+  closeLockout = () => this.setState({ lockout: false });
+  lockoutUnlock = () => { this.setState({ lockout: false }); this.openChallenge('Unlocking Steam for 10 minutes', () => this.flash('Unlocked for 10 minutes.')); };
+
+  sendFeedback = () => this.flash('Thanks — feedback form opening.');
+  openLogs = () => this.flash('Opening logs folder.');
+
+  replayOnboarding = () => this.setState({ onboarding: true, onbStep: 0 });
+  onbNext = () => this.setState((s) => ({ onbStep: Math.min(4, s.onbStep + 1) }));
+  onbBack = () => this.setState((s) => ({ onbStep: Math.max(0, s.onbStep - 1) }));
+  onbFinish = () => { this.setState({ onboarding: false }); this.flash(`Welcome aboard, ${this.state.onbName.trim() || 'friend'}.`); };
+  onOnbName = (e) => this.setState({ onbName: e.target.value });
+  onbSetAlways = () => this.setState({ onbMode: 'always' });
+  onbSetSchedule = () => this.setState({ onbMode: 'schedule' });
+  onbToggle = (exe) => this.setState((s) => ({ onbPicks: { ...s.onbPicks, [exe]: !s.onbPicks[exe] } }));
+
+  renderVals() {
+    const s = this.state;
+    const titles = {
+      home: ['Home', 'Good evening, Marcus'],
+      apps: ['Apps', 'Lock down launchers & games'],
+      sites: ['Websites', 'Block storefronts & communities'],
+      schedule: ['Schedule', 'When scheduled blocks apply'],
+      stats: ['Progress', 'Your streak & wins'],
+      settings: ['Settings', 'Challenge, panic & protection']
+    };
+    const [tabTitle, tabSub] = titles[s.tab] || ['Home', ''];
+
+    const ICON = {
+      'Steam': ['#1b2838', '#6aa3d6'], 'Epic Games': ['#2a2030', '#cf9ad6'],
+      'Battle.net': ['#202a2a', '#7fc7c0'], 'Xbox': ['#1f2a20', '#8ccf8a'],
+      'Riot Client': ['#2a2222', '#d68a8a']
+    };
+    const TAG = {
+      always: ['#ff8a8a', 'rgba(255,80,80,.13)', 'rgba(255,80,80,.28)', 'ALWAYS'],
+      schedule: ['#b9b9ff', 'rgba(123,123,255,.14)', 'rgba(123,123,255,.3)', 'SCHEDULE'],
+      budget: ['#ffce7a', 'rgba(255,180,60,.13)', 'rgba(255,180,60,.28)', 'LIMIT']
+    };
+    const apps = s.apps.map((a) => {
+      const [iconBg, iconColor] = ICON[a.name] || ['#232838', '#9aa0b0'];
+      const init = a.name.replace(/[^a-zA-Z0-9]/g, '').slice(0, 2).toUpperCase();
+      const limit = a.limit || 60, used = a.used || 0;
+      const [tagColor, tagBg, tagBorder, tag] = TAG[a.mode];
+      return {
+        ...a, iconBg, iconColor, init, limit,
+        isAlways: a.mode === 'always', notAlways: a.mode !== 'always',
+        isSchedule: a.mode === 'schedule', notSchedule: a.mode !== 'schedule',
+        isBudget: a.mode === 'budget', notBudget: a.mode !== 'budget',
+        hint: a.mode === 'always' ? 'Blocked 24/7' : a.mode === 'schedule' ? 'Follows your schedule' : `${limit} min per day`,
+        usedPct: Math.min(100, Math.round((used / limit) * 100)) + '%',
+        usedLabel: `${used}/${limit}m used`,
+        tagColor, tagBg, tagBorder, tag,
+        onAlways: () => this.setMode(a.name, 'always'),
+        onSchedule: () => this.setMode(a.name, 'schedule'),
+        onBudget: () => this.setMode(a.name, 'budget'),
+        onRemove: () => this.askRemove(a.name)
+      };
+    });
+
+    const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const schedDays = DAYS.map((name) => {
+      const on = !!s.sched[name];
+      return { name, on, off: !on, trackBg: on ? '#5b5bf0' : '#2a3142', knobLeft: on ? '21px' : '3px', labelColor: on ? '#e6e8ee' : '#8b91a3', onToggle: () => this.toggleDay(name) };
+    });
+
+    const ch = s.ch;
+    const target = this.chTarget();
+    let chDone = '', chRest = target, chPct = '0%', chValid = false, chProgressLabel = `0 / ${target.split(' ').length} words`;
+    if (ch) {
+      const t = ch.typed || '';
+      let i = 0; while (i < t.length && i < target.length && t[i] === target[i]) i++;
+      chDone = target.slice(0, i); chRest = target.slice(i);
+      chPct = Math.round((i / target.length) * 100) + '%';
+      chValid = t.trim() === target;
+      const words = chDone.trim() === '' ? 0 : chDone.trim().split(/\s+/).length;
+      chProgressLabel = `${words} / ${target.split(' ').length} words`;
+    }
+
+    const onbExes = [
+      ['Steam', 'steam.exe'], ['Epic Games', 'EpicGamesLauncher.exe'],
+      ['Battle.net', 'Battle.net.exe'], ['Xbox', 'XboxApp.exe'], ['Riot Client', 'RiotClient.exe']
+    ];
+    const onbLaunchers = onbExes.map(([label, exe]) => {
+      const picked = !!s.onbPicks[exe];
+      return { label, exe, picked, check: picked ? '✓' : '', bg: picked ? 'rgba(123,123,255,.12)' : '#0f1117', border: picked ? '#5b5bf0' : '#2a3142', checkBorder: picked ? '#5b5bf0' : '#2a3142', checkBg: picked ? 'rgba(123,123,255,.2)' : 'transparent', onToggle: () => this.onbToggle(exe) };
+    });
+    const onbDots = [0, 1, 2, 3, 4].map((i) => ({ w: i === s.onbStep ? '22px' : '8px', bg: i === s.onbStep ? '#7b7bff' : '#2a3142' }));
+
+    const chFieldLabel = s.chType === 'words' ? 'random words to type' : s.chType === 'chars' ? 'characters to type' : 'minute countdown';
+
+    return {
+      tabTitle, tabSub, clock: s.clock,
+      isHome: s.tab === 'home', isApps: s.tab === 'apps', isSites: s.tab === 'sites',
+      isSchedule: s.tab === 'schedule', isStats: s.tab === 'stats', isSettings: s.tab === 'settings',
+      navHome: () => this.nav('home'), navApps: () => this.nav('apps'), navSites: () => this.nav('sites'),
+      navSchedule: () => this.nav('schedule'), navStats: () => this.nav('stats'), navSettings: () => this.nav('settings'),
+      paused: s.paused, notPaused: !s.paused, togglePause: this.togglePause, startPanic: this.startPanic,
+      armedSummary: `${s.apps.length} apps and ${s.sites.length} sites locked down · enforcing now`,
+      apps, appsPreview: apps.slice(0, 4),
+      newApp: s.newApp, onNewApp: this.onNewApp, onNewAppKey: this.onNewAppKey, addApp: this.addApp,
+      addLaunchers: this.addLaunchers, addRunning: this.addRunning, addFolder: this.addFolder,
+      folders: s.folders.map((p) => ({ path: p, onRemove: () => this.removeFolder(p) })),
+      newSite: s.newSite, onNewSite: this.onNewSite, onNewSiteKey: this.onNewSiteKey, addSite: this.addSite,
+      sites: s.sites.map((d) => ({ domain: d, onRemove: () => this.removeSite(d) })),
+      schedWeekdays: s.sched.Mon && s.sched.Tue && s.sched.Wed && s.sched.Thu && s.sched.Fri && !s.sched.Sat && !s.sched.Sun,
+      schedCustom: !(s.sched.Mon && s.sched.Tue && s.sched.Wed && s.sched.Thu && s.sched.Fri && !s.sched.Sat && !s.sched.Sun),
+      setWeekdays: this.setWeekdays, setCustom: this.setCustom, schedDays,
+      chWordsSel: s.chType === 'words', chWordsNot: s.chType !== 'words',
+      chCharsSel: s.chType === 'chars', chCharsNot: s.chType !== 'chars',
+      chTimerSel: s.chType === 'timer', chTimerNot: s.chType !== 'timer',
+      setChWords: this.setChWords, setChChars: this.setChChars, setChTimer: this.setChTimer,
+      chFieldLabel, chWords: s.chWords, onChWords: this.onChWords,
+      protection: s.protection, notProtection: !s.protection, toggleProtection: this.toggleProtection,
+      protectionDesc: s.protection ? 'On — starts on login and relaunches itself if closed.' : 'Off — FocusLock can be closed normally.',
+      panicMin: s.panicMin, onPanicMin: this.onPanicMin, mantra: s.mantra, onMantra: this.onMantra,
+      previewLockout: this.previewLockout, replayOnboarding: this.replayOnboarding,
+      sendFeedback: this.sendFeedback, openLogs: this.openLogs,
+      notice: s.notice, noticeShown: !!s.notice,
+      chOpen: !!ch, chLabel: ch ? ch.label : '', chTyped: ch ? ch.typed : '',
+      chDone, chRest, chPct, chValid, chInvalid: !chValid, chProgressLabel,
+      onChallengeInput: this.onChallengeInput, cancelChallenge: this.cancelChallenge, submitChallenge: this.submitChallenge,
+      lockout: s.lockout, closeLockout: this.closeLockout, lockoutUnlock: this.lockoutUnlock,
+      panic: s.panic, panicLeft: s.panicLeft,
+      onboarding: s.onboarding, onbStep: s.onbStep,
+      onbS0: s.onbStep === 0, onbS1: s.onbStep === 1, onbS2: s.onbStep === 2, onbS3: s.onbStep === 3, onbS4: s.onbStep === 4,
+      onbCanBack: s.onbStep > 0, onbNoBack: s.onbStep === 0,
+      onbNotLast: s.onbStep < 4, onbLast: s.onbStep === 4,
+      onbNext: this.onbNext, onbBack: this.onbBack, onbFinish: this.onbFinish,
+      onbName: s.onbName, onOnbName: this.onOnbName, who: s.onbName.trim() || 'friend',
+      onbLaunchers, onbDots,
+      onbSetAlways: this.onbSetAlways, onbSetSchedule: this.onbSetSchedule,
+      onbAlwaysBg: s.onbMode === 'always' ? 'rgba(123,123,255,.12)' : '#0f1117',
+      onbAlwaysBorder: s.onbMode === 'always' ? '#5b5bf0' : '#2a3142',
+      onbSchedBg: s.onbMode === 'schedule' ? 'rgba(123,123,255,.12)' : '#0f1117',
+      onbSchedBorder: s.onbMode === 'schedule' ? '#5b5bf0' : '#2a3142'
+    };
+  }
+}
+</script>
+</body>
+</html>

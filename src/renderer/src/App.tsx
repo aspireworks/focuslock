@@ -2,6 +2,20 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Challenge } from './Challenge'
 import { PanicOverlay } from './Panic'
 import { Onboarding } from './Onboarding'
+import { Lockout } from './Lockout'
+import {
+  BarChart,
+  Calendar,
+  Folder,
+  Globe,
+  Grid,
+  Home,
+  Pause,
+  Shield,
+  ShieldCheck,
+  Sliders,
+  X
+} from './icons'
 import {
   DAY_LABELS,
   dedupeRanges,
@@ -13,7 +27,6 @@ import {
   type Schedule,
   type TimeRange
 } from './types'
-// FolderRule type is read via state.config; no direct import needed.
 
 interface ProtectedResult {
   ok: boolean
@@ -28,6 +41,8 @@ interface GameRow {
   blocked: boolean
 }
 
+type Tab = 'home' | 'apps' | 'sites' | 'schedule' | 'progress' | 'settings'
+
 const MODES: { key: BlockMode; label: string }[] = [
   { key: 'always', label: 'Always' },
   { key: 'schedule', label: 'Schedule' },
@@ -41,22 +56,57 @@ const CHALLENGE_TYPES: { key: ChallengeType; label: string }[] = [
   { key: 'timer', label: 'Timer' }
 ]
 
-function formatUntil(iso: string | null): string {
-  if (!iso) return ''
-  const ms = new Date(iso).getTime() - Date.now()
-  if (ms <= 0) return 'now'
-  const mins = Math.round(ms / 60000)
-  const h = Math.floor(mins / 60)
-  const m = mins % 60
-  if (h > 24) return `${Math.round(h / 24)}d`
-  if (h > 0) return `${h}h ${m}m`
-  return `${m}m`
+// Render days Monday-first to match the design, mapping back to JS day indices.
+const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0]
+
+const NAV: { key: Tab; label: string; sub: string; Icon: (p: { size?: number }) => JSX.Element }[] = [
+  { key: 'home', label: 'Home', sub: '', Icon: Home },
+  { key: 'apps', label: 'Apps', sub: 'Lock down launchers & games', Icon: Grid },
+  { key: 'sites', label: 'Websites', sub: 'Block storefronts & communities', Icon: Globe },
+  { key: 'schedule', label: 'Schedule', sub: 'When scheduled blocks apply', Icon: Calendar },
+  { key: 'progress', label: 'Progress', sub: 'Your streak & wins', Icon: BarChart }
+]
+
+const BADGES = [
+  { emoji: '🛡️', name: 'First day', need: 1 },
+  { emoji: '🔥', name: '7-day streak', need: 7 },
+  { emoji: '⚔️', name: '14-day streak', need: 14 },
+  { emoji: '👑', name: '30-day reset', need: 30 }
+]
+
+function appBadge(name: string): { initials: string; bg: string; fg: string } {
+  const lower = name.toLowerCase()
+  const base = name.replace(/\.exe$/i, '').replace(/[^a-zA-Z0-9]/g, '')
+  const initials = (base.slice(0, 2) || '?').toUpperCase()
+  if (lower.includes('steam')) return { initials, bg: '#1b2838', fg: '#6aa3d6' }
+  if (lower.includes('epic')) return { initials, bg: '#2a2030', fg: '#cf9ad6' }
+  if (lower.includes('battle')) return { initials, bg: '#202a2a', fg: '#7fc7c0' }
+  if (lower.includes('xbox')) return { initials, bg: '#1f2a20', fg: '#8ccf8a' }
+  if (lower.includes('riot')) return { initials, bg: '#2a2222', fg: '#d68a8a' }
+  return { initials, bg: '#232838', fg: '#9aa0b0' }
 }
 
-function fmtDur(seconds: number): string {
-  const m = Math.round(seconds / 60)
-  if (m < 60) return `${m}m`
-  return `${Math.floor(m / 60)}h ${m % 60}m`
+function modeTag(mode: BlockMode): { label: string; cls: string } {
+  if (mode === 'always') return { label: 'Always', cls: 'tag-always' }
+  if (mode === 'schedule') return { label: 'Schedule', cls: 'tag-schedule' }
+  return { label: 'Limit', cls: 'tag-limit' }
+}
+
+function prettyName(name: string): string {
+  const b = name.replace(/\.exe$/i, '')
+  return b.charAt(0).toUpperCase() + b.slice(1)
+}
+
+function greeting(d: Date): string {
+  const h = d.getHours()
+  if (h < 12) return 'Good morning'
+  if (h < 18) return 'Good afternoon'
+  return 'Good evening'
+}
+
+function nextMilestone(streak: number): number {
+  const targets = [3, 7, 14, 21, 30, 60, 90, 180, 365]
+  return targets.find((t) => t > streak) ?? streak + 30
 }
 
 type SchedView = 'weekdays' | 'custom'
@@ -74,13 +124,18 @@ function isWeekdays95(s: Schedule): boolean {
 }
 
 function detectView(s: Schedule): SchedView {
-  if (isWeekdays95(s)) return 'weekdays'
-  return 'custom'
+  return isWeekdays95(s) ? 'weekdays' : 'custom'
 }
 
 export default function App(): JSX.Element {
   const [state, setState] = useState<AppState | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<Tab>('home')
+  const [now, setNow] = useState(() => new Date())
+
+  // Overlay/preview UI flags
+  const [lockoutPreview, setLockoutPreview] = useState(false)
+  const [replayOnb, setReplayOnb] = useState(false)
 
   // Schedule editing draft
   const [draft, setDraft] = useState<Schedule | null>(null)
@@ -126,6 +181,7 @@ export default function App(): JSX.Element {
       kind: 'text' | 'timer'
       text?: string
       endsAt?: number
+      context?: string
       onResolve: (t: string | null) => void
     }
   >(null)
@@ -136,7 +192,7 @@ export default function App(): JSX.Element {
 
   const flash = useCallback((msg: string) => {
     setNotice(msg)
-    window.setTimeout(() => setNotice(null), 4000)
+    window.setTimeout(() => setNotice(null), 3200)
   }, [])
 
   const refresh = useCallback(async () => {
@@ -148,6 +204,12 @@ export default function App(): JSX.Element {
     const t = window.setInterval(() => void refresh(), 2000)
     return () => window.clearInterval(t)
   }, [refresh])
+
+  // Top-bar clock ticks every second.
+  useEffect(() => {
+    const t = window.setInterval(() => setNow(new Date()), 1000)
+    return () => window.clearInterval(t)
+  }, [])
 
   // One-time boot greeting.
   useEffect(() => {
@@ -174,10 +236,11 @@ export default function App(): JSX.Element {
   }, [state, draft])
 
   const runChallenge = useCallback(
-    (c: { id: string; kind: 'text' | 'timer'; text?: string; endsAt?: number }) =>
+    (c: { id: string; kind: 'text' | 'timer'; text?: string; endsAt?: number }, context?: string) =>
       new Promise<string | null>((resolve) => {
         setChallenge({
           ...c,
+          context,
           onResolve: (t) => {
             setChallenge(null)
             resolve(t)
@@ -188,11 +251,11 @@ export default function App(): JSX.Element {
   )
 
   const protectedCall = useCallback(
-    async (fn: (token?: string) => Promise<ProtectedResult>): Promise<boolean> => {
+    async (fn: (token?: string) => Promise<ProtectedResult>, context?: string): Promise<boolean> => {
       let res = await fn(undefined)
       if (res && res.ok === false && res.reason === 'locked') {
         const c = await window.api.startChallenge()
-        const token = await runChallenge(c)
+        const token = await runChallenge(c, context)
         if (!token) return false
         res = await fn(token)
         if (res && res.ok === false) {
@@ -229,14 +292,12 @@ export default function App(): JSX.Element {
     [refresh, flash, scanGames]
   )
 
-  const browse = useCallback(async () => {
-    const picked = await window.api.pickAppFile()
-    if (picked) await addApp(picked.name)
-  }, [addApp])
-
   const removeApp = useCallback(
     async (name: string) => {
-      await protectedCall((token) => window.api.removeApp(name, token) as Promise<ProtectedResult>)
+      await protectedCall(
+        (token) => window.api.removeApp(name, token) as Promise<ProtectedResult>,
+        `Removing ${prettyName(name)}`
+      )
       await scanGames()
     },
     [protectedCall, scanGames]
@@ -251,7 +312,8 @@ export default function App(): JSX.Element {
             mode,
             mode === 'budget' ? appCfg.dailyLimitMinutes || 60 : undefined,
             token
-          ) as Promise<ProtectedResult>
+          ) as Promise<ProtectedResult>,
+        `Changing ${prettyName(appCfg.name)} to ${modeTag(mode).label}`
       ),
     [protectedCall]
   )
@@ -261,7 +323,9 @@ export default function App(): JSX.Element {
       const v = limitDrafts[appCfg.name]
       if (v == null || v === appCfg.dailyLimitMinutes) return
       await protectedCall(
-        (token) => window.api.setAppMode(appCfg.name, 'budget', v, token) as Promise<ProtectedResult>
+        (token) =>
+          window.api.setAppMode(appCfg.name, 'budget', v, token) as Promise<ProtectedResult>,
+        `Updating ${prettyName(appCfg.name)} limit`
       )
     },
     [limitDrafts, protectedCall]
@@ -278,16 +342,25 @@ export default function App(): JSX.Element {
   const changeFolderMode = useCallback(
     (path: string, mode: 'always' | 'schedule') =>
       protectedCall(
-        (token) => window.api.setFolderMode(path, mode, token) as Promise<ProtectedResult>
+        (token) => window.api.setFolderMode(path, mode, token) as Promise<ProtectedResult>,
+        'Changing folder block'
       ),
     [protectedCall]
   )
 
   const removeFolder = useCallback(
     (path: string) =>
-      protectedCall((token) => window.api.removeFolder(path, token) as Promise<ProtectedResult>),
+      protectedCall(
+        (token) => window.api.removeFolder(path, token) as Promise<ProtectedResult>,
+        'Removing a blocked folder'
+      ),
     [protectedCall]
   )
+
+  const browse = useCallback(async () => {
+    const picked = await window.api.pickAppFile()
+    if (picked) await addApp(picked.name)
+  }, [addApp])
 
   const addSite = useCallback(async () => {
     const d = siteInput.trim()
@@ -304,7 +377,10 @@ export default function App(): JSX.Element {
 
   const removeSite = useCallback(
     (domain: string) =>
-      protectedCall((token) => window.api.removeSite(domain, token) as Promise<ProtectedResult>),
+      protectedCall(
+        (token) => window.api.removeSite(domain, token) as Promise<ProtectedResult>,
+        `Removing ${domain}`
+      ),
     [protectedCall]
   )
 
@@ -326,13 +402,18 @@ export default function App(): JSX.Element {
             timerMinutes: chTimer
           },
           token
-        ) as Promise<ProtectedResult>
+        ) as Promise<ProtectedResult>,
+      'Changing the unlock challenge'
     )
     if (ok) flash('Challenge settings saved.')
   }, [chType, chLen, chWords, chCustom, chTimer, protectedCall, flash])
 
   const quit = useCallback(
-    () => protectedCall((token) => window.api.requestQuit(token) as Promise<ProtectedResult>),
+    () =>
+      protectedCall(
+        (token) => window.api.requestQuit(token) as Promise<ProtectedResult>,
+        'Quitting FocusLock'
+      ),
     [protectedCall]
   )
 
@@ -360,7 +441,8 @@ export default function App(): JSX.Element {
   const toggleProtection = useCallback(async () => {
     if (stateRef.current?.config.protectionEnabled) {
       await protectedCall(
-        (token) => window.api.setProtection(false, token) as Promise<ProtectedResult>
+        (token) => window.api.setProtection(false, token) as Promise<ProtectedResult>,
+        'Turning off stay-on protection'
       )
     } else {
       await window.api.setProtection(true)
@@ -368,6 +450,12 @@ export default function App(): JSX.Element {
       flash('Protection on — FocusLock will stay running and start on login.')
     }
   }, [protectedCall, refresh, flash])
+
+  const previewUnlock = useCallback(async () => {
+    const c = await window.api.startChallenge()
+    await runChallenge(c, 'Unlocking anyway')
+    setLockoutPreview(false)
+  }, [runChallenge])
 
   useEffect(() => window.api.onQuitRequested(() => void quit()), [quit])
 
@@ -394,10 +482,20 @@ export default function App(): JSX.Element {
     (v: SchedView) => {
       setSchedView(v)
       if (v === 'weekdays') applyPreset('weekdays')
-      // 'custom' keeps the current draft so the user can fine-tune it
     },
     [applyPreset]
   )
+
+  // Toggle a whole day from the at-a-glance list: on → default 9–5, off → clear.
+  const toggleDay = useCallback((day: number) => {
+    setDraft((prev) => {
+      const next: Schedule = { ...(prev ?? {}) }
+      const cur = next[String(day)] ?? []
+      next[String(day)] = cur.length ? [] : [{ start: '09:00', end: '17:00' }]
+      setSchedView(detectView(next))
+      return next
+    })
+  }, [])
 
   const clearSchedule = useCallback(() => {
     setDraft({})
@@ -431,7 +529,8 @@ export default function App(): JSX.Element {
       if (d.length) cleaned[k] = d
     }
     const ok = await protectedCall(
-      (token) => window.api.setSchedule(cleaned, true, token) as Promise<ProtectedResult>
+      (token) => window.api.setSchedule(cleaned, true, token) as Promise<ProtectedResult>,
+      'Saving the schedule'
     )
     if (ok) {
       setDraft(cleaned)
@@ -468,6 +567,8 @@ export default function App(): JSX.Element {
   const blockedSet = new Set(config.blocklist.map((a) => a.name.toLowerCase()))
   const blockMsgDirty = blockMsg !== config.blockMessage
   const chartMax = Math.max(1, ...stats.last7.map((d) => d.count))
+  const streak = stats.daysSinceStart
+  const reclaimedHours = stats.weekRuntime.reduce((sum, a) => sum + a.seconds, 0) / 3600
 
   const enforcing =
     !paused &&
@@ -482,12 +583,6 @@ export default function App(): JSX.Element {
   const runningFiltered = (running ?? []).filter((n) =>
     n.toLowerCase().includes(runningFilter.toLowerCase())
   )
-
-  const headerClass = paused
-    ? 'status status-paused'
-    : enforcing
-      ? 'status status-active'
-      : 'status status-idle'
 
   const chDirty =
     chType !== config.challenge.type ||
@@ -505,339 +600,423 @@ export default function App(): JSX.Element {
     return <Onboarding onDone={() => void refresh()} />
   }
 
-  return (
-    <div className="app">
-      {notice && <div className="notice">{notice}</div>}
+  const userName = config.userName?.trim() || 'friend'
+  const avatarLetter = userName.charAt(0).toUpperCase()
+  const homeSub = `${greeting(now)}, ${userName}`
+  const sectionMeta =
+    activeTab === 'home'
+      ? { label: 'Home', sub: homeSub }
+      : activeTab === 'settings'
+        ? { label: 'Settings', sub: 'Challenge, panic & protection' }
+        : NAV.find((n) => n.key === activeTab)!
 
-      <header className={headerClass}>
-        <div>
-          <div className="status-label">
-            {paused ? 'PAUSED (dev override)' : enforcing ? 'BLOCKING ACTIVE' : 'Idle'}
+  const clockStr = now
+    .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    .toUpperCase()
+
+  // ---------------------------------------------------------- Home
+  function renderHome(): JSX.Element {
+    const lockedPreview = config.blocklist.slice(0, 4)
+    return (
+      <div className="page page-home">
+        <div className={paused ? 'status-banner paused' : 'status-banner active'}>
+          <div className="status-tile">
+            {paused ? <Pause size={26} /> : <ShieldCheck size={28} />}
           </div>
-          <div className="status-sub">
-            {paused
-              ? 'Nothing is being blocked while paused.'
-              : enforcing
-                ? 'Blocked apps will be closed on sight.'
-                : status.nextChange
-                  ? `Next scheduled block in ${formatUntil(status.nextChange)}`
-                  : `${config.blocklist.length} app(s) armed`}
+          <div className="status-main">
+            <div className="status-title">
+              {paused ? 'Blocking paused' : 'Protection active'}
+            </div>
+            <div className="status-sub">
+              {paused
+                ? "Nothing is being blocked right now. Resume when you're ready."
+                : `${config.blocklist.length} ${config.blocklist.length === 1 ? 'app' : 'apps'} and ${config.blockedSites.length} ${config.blockedSites.length === 1 ? 'site' : 'sites'} locked down · ${enforcing ? 'enforcing now' : 'armed'}`}
+            </div>
+          </div>
+          {!paused && (
+            <div className="streak-box">
+              <div className="streak-num">
+                {streak} <span style={{ fontSize: '28px' }}>🔥</span>
+              </div>
+              <div className="streak-cap">day streak</div>
+            </div>
+          )}
+        </div>
+
+        <div className="stat-grid">
+          <div className="stat-tile">
+            <div className="stat-num">{stats.weekTotal}</div>
+            <div className="stat-label">resisted this week</div>
+          </div>
+          <div className="stat-tile">
+            <div className="stat-num">{stats.totalBlocks}</div>
+            <div className="stat-label">total blocks</div>
+          </div>
+          <div className="stat-tile">
+            <div className="stat-num">
+              {reclaimedHours.toFixed(1)}
+              <span className="unit">h</span>
+            </div>
+            <div className="stat-label">time reclaimed</div>
           </div>
         </div>
-        <div className="header-right">
-          <button className="btn panic-btn" onClick={() => void triggerPanic()}>
-            Panic
-          </button>
-          <button className={paused ? 'btn primary' : 'btn ghost'} onClick={() => void togglePause()}>
-            {paused ? 'Resume blocking' : 'Pause (dev)'}
-          </button>
-          <div className="brand">FocusLock</div>
-        </div>
-      </header>
 
-      <main className="grid">
-        {/* Progress */}
-        <section className="card progress-card">
-          <h3>Your progress</h3>
-          <div className="stat-row">
-            <div className="stat-big">
-              <div className="stat-num">{stats.daysSinceStart}</div>
-              <div className="stat-label">{stats.daysSinceStart === 1 ? 'day' : 'days'} strong</div>
+        <div className="two-col">
+          <div className="card">
+            <div className="card-head">
+              <div className="card-title">Locked apps</div>
+              <button className="link" onClick={() => setActiveTab('apps')}>
+                Manage →
+              </button>
             </div>
-            <div className="stat-big">
-              <div className="stat-num">{stats.weekTotal}</div>
-              <div className="stat-label">resisted this week</div>
-            </div>
-            <div className="stat-big">
-              <div className="stat-num">{stats.totalBlocks}</div>
-              <div className="stat-label">total blocks</div>
-            </div>
-          </div>
-
-          <div className="chart">
-            {stats.last7.map((d) => (
-              <div key={d.date} className="chart-col">
-                <div className="chart-bar-wrap">
+            {lockedPreview.length === 0 && <div className="empty">Nothing blocked yet.</div>}
+            {lockedPreview.map((a) => {
+              const b = appBadge(a.name)
+              const tag = modeTag(a.mode)
+              return (
+                <div key={a.name} className="app-row">
                   <div
-                    className="chart-bar"
-                    style={{ height: `${Math.round((d.count / chartMax) * 100)}%` }}
-                    title={`${d.count}`}
-                  />
+                    className="lbadge"
+                    style={{ width: 30, height: 30, background: b.bg, color: b.fg }}
+                  >
+                    {b.initials}
+                  </div>
+                  <span className="app-row-name">{prettyName(a.name)}</span>
+                  <span className={`tag ${tag.cls}`}>{tag.label}</span>
                 </div>
-                <div className="chart-day">
-                  {DAY_LABELS[new Date(d.date + 'T00:00:00').getDay()][0]}
+              )
+            })}
+          </div>
+
+          <div className="card">
+            <div className="card-head">
+              <div className="card-title">This week</div>
+            </div>
+            <div className="chart">
+              {stats.last7.map((d) => (
+                <div key={d.date} className="chart-col">
+                  <div className="chart-bar-wrap">
+                    <div
+                      className="chart-bar"
+                      style={{ height: `${Math.round((d.count / chartMax) * 100)}%` }}
+                      title={`${d.count}`}
+                    />
+                  </div>
+                  <div className="chart-day">
+                    {DAY_LABELS[new Date(d.date + 'T00:00:00').getDay()][0]}
+                  </div>
                 </div>
+              ))}
+            </div>
+            <div className="divider" />
+            <div className="eyebrow">Recent blocks</div>
+            {killLog.length === 0 && <div className="empty">Nothing caught yet.</div>}
+            {killLog.slice(0, 3).map((k, i) => (
+              <div key={i} className="kv-row">
+                <span>{prettyName(k.name)}</span>
+                <span className="kv-time">{new Date(k.time).toLocaleTimeString()}</span>
               </div>
             ))}
           </div>
+        </div>
+      </div>
+    )
+  }
 
-          {stats.totalBlocks === 0 ? (
-            <p className="muted pad">
-              No blocks yet — once FocusLock starts catching things, your wins show up here.
-            </p>
-          ) : (
-            stats.topApps.length > 0 && (
-              <>
-                <p className="muted top-label">Most-resisted</p>
-                <ul className="list">
-                  {stats.topApps.map((a) => (
-                    <li key={a.name} className="list-item">
-                      <span>{a.name}</span>
-                      <span className="muted">{a.count}×</span>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )
-          )}
-
-          {stats.weekRuntime.length > 0 && (
-            <>
-              <p className="muted top-label">Time on blocked apps (last 7 days)</p>
-              <ul className="list">
-                {stats.weekRuntime.map((a) => (
-                  <li key={a.name} className="list-item">
-                    <span>{a.name}</span>
-                    <span className="muted">{fmtDur(a.seconds)}</span>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </section>
-
-        {/* Blocked apps */}
-        <section className="card">
-          <h3>Blocked apps</h3>
-          <div className="row-gap add-row">
+  // ---------------------------------------------------------- Apps
+  function renderApps(): JSX.Element {
+    return (
+      <div className="page page-apps">
+        <div className="card add-card">
+          <div className="card-title">Add an app to block</div>
+          <p className="card-help">Type an executable, browse for it, or pick from launchers we detected.</p>
+          <div className="add-row">
             <input
-              className="input"
+              className="field"
               placeholder="e.g. steam.exe"
               value={newApp}
               onChange={(e) => setNewApp(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && void addApp(newApp)}
             />
-            <button className="btn primary" onClick={() => void addApp(newApp)}>
+            <button className="btn accent" onClick={() => void addApp(newApp)}>
               Add
+            </button>
+          </div>
+          <div className="ghost-row">
+            <button className="btn ghost" onClick={openGames}>
+              ＋ Game launchers
+            </button>
+            <button className="btn ghost" onClick={openRunning}>
+              ＋ Running apps
             </button>
             <button className="btn ghost" onClick={() => void browse()}>
               Browse…
             </button>
           </div>
+        </div>
 
-          <div className="row-gap">
-            <button className="btn ghost" onClick={openGames}>
-              Add game launchers
-            </button>
-            <button className="btn ghost" onClick={openRunning}>
-              Add from running apps
-            </button>
-          </div>
-
-          <ul className="list scroll">
-            {config.blocklist.length === 0 && <li className="muted pad">Nothing blocked yet.</li>}
-            {config.blocklist.map((a) => {
-              const limit = a.dailyLimitMinutes ?? 60
-              const used = usedMinutes(a.name)
-              return (
-                <li key={a.name} className="app-item">
-                  <div className="app-item-top">
-                    <span className="app-name">{a.name}</span>
-                    <button className="btn danger sm" onClick={() => void removeApp(a.name)}>
-                      Remove
-                    </button>
+        <div className="section-label">Blocked apps</div>
+        {config.blocklist.length === 0 && <div className="empty">Nothing blocked yet.</div>}
+        {config.blocklist.map((a) => {
+          const b = appBadge(a.name)
+          const limit = a.dailyLimitMinutes ?? 60
+          const used = usedMinutes(a.name)
+          const hint =
+            a.mode === 'always'
+              ? 'Blocked 24/7'
+              : a.mode === 'schedule'
+                ? 'Follows your schedule'
+                : `${limit} min per day`
+          return (
+            <div key={a.name} className="block-item-wrap">
+              <div className="block-item">
+                <div
+                  className="lbadge"
+                  style={{ width: 34, height: 34, background: b.bg, color: b.fg }}
+                >
+                  {b.initials}
+                </div>
+                <div className="block-item-main">
+                  <div className="block-item-name">{prettyName(a.name)}</div>
+                  <div className="block-item-hint">{hint}</div>
+                </div>
+                <div className="block-item-controls">
+                  <div className="seg">
+                    {MODES.map((m) => (
+                      <button
+                        key={m.key}
+                        className={a.mode === m.key ? 'seg-btn active' : 'seg-btn'}
+                        onClick={() => void changeMode(a, m.key)}
+                      >
+                        {m.label}
+                      </button>
+                    ))}
                   </div>
-                  <div className="app-item-controls">
-                    <div className="seg">
-                      {MODES.map((m) => (
-                        <button
-                          key={m.key}
-                          className={a.mode === m.key ? 'seg-btn active' : 'seg-btn'}
-                          onClick={() => void changeMode(a, m.key)}
-                        >
-                          {m.label}
-                        </button>
-                      ))}
-                    </div>
-                    {a.mode === 'budget' && (
-                      <div className="budget-row">
-                        <input
-                          className="input mini"
-                          type="number"
-                          min={1}
-                          max={1440}
-                          value={limitDrafts[a.name] ?? limit}
-                          onChange={(e) =>
-                            setLimitDrafts((d) => ({ ...d, [a.name]: Number(e.target.value) }))
-                          }
-                          onBlur={() => void commitLimit(a)}
-                        />
-                        <span className="muted">
-                          min/day · {used}/{limit}m used{used >= limit ? ' — reached' : ''}
-                        </span>
-                      </div>
-                    )}
-                    {a.mode === 'schedule' && (
-                      <span className="muted mode-hint">uses the schedule →</span>
-                    )}
-                    {a.mode === 'always' && <span className="muted mode-hint">blocked 24/7</span>}
-                  </div>
-                </li>
-              )
-            })}
-          </ul>
-        </section>
-
-        {/* Blocked folders */}
-        <section className="card">
-          <h3>Blocked folders</h3>
-          <p className="muted">
-            Blocks every app launched from inside a folder — e.g. a game library.
-          </p>
-          <div className="row-gap add-row">
-            <button className="btn primary" onClick={() => void addFolder()}>
-              Add folder…
-            </button>
-          </div>
-          <ul className="list scroll">
-            {config.folderBlocks.length === 0 && (
-              <li className="muted pad">No folders blocked.</li>
-            )}
-            {config.folderBlocks.map((f) => (
-              <li key={f.path} className="app-item">
-                <div className="app-item-top">
-                  <span className="folder-path" title={f.path}>
-                    {f.path}
-                  </span>
-                  <button className="btn danger sm" onClick={() => void removeFolder(f.path)}>
-                    Remove
+                  <button
+                    className="btn-remove"
+                    title="Remove"
+                    onClick={() => void removeApp(a.name)}
+                  >
+                    <X size={16} />
                   </button>
                 </div>
-                <div className="app-item-controls">
-                  <div className="seg">
-                    <button
-                      className={f.mode === 'always' ? 'seg-btn active' : 'seg-btn'}
-                      onClick={() => void changeFolderMode(f.path, 'always')}
-                    >
-                      Always
-                    </button>
-                    <button
-                      className={f.mode === 'schedule' ? 'seg-btn active' : 'seg-btn'}
-                      onClick={() => void changeFolderMode(f.path, 'schedule')}
-                    >
-                      Schedule
-                    </button>
+              </div>
+              {a.mode === 'budget' && (
+                <div className="budget-sub">
+                  <span className="b-label">Daily limit</span>
+                  <input
+                    className="field mini mono"
+                    type="number"
+                    min={1}
+                    max={1440}
+                    value={limitDrafts[a.name] ?? limit}
+                    onChange={(e) =>
+                      setLimitDrafts((d) => ({ ...d, [a.name]: Number(e.target.value) }))
+                    }
+                    onBlur={() => void commitLimit(a)}
+                  />
+                  <div className="budget-track">
+                    <div
+                      className="budget-fill"
+                      style={{ width: `${Math.min(100, (used / Math.max(1, limit)) * 100)}%` }}
+                    />
                   </div>
-                  <span className="muted mode-hint">
-                    {f.mode === 'always' ? 'blocked 24/7' : 'uses the schedule →'}
+                  <span className="budget-used">
+                    {used}/{limit}m used{used >= limit ? ' — reached' : ''}
                   </span>
                 </div>
-              </li>
-            ))}
-          </ul>
-        </section>
+              )}
+            </div>
+          )
+        })}
 
-        {/* Blocked websites */}
-        <section className="card">
-          <h3>Blocked websites</h3>
-          <p className="muted">
-            Blocks domains across Chrome, Edge &amp; Firefox via the hosts file. Adding or removing
-            one shows a Windows admin prompt.
+        <div className="section-label" style={{ marginTop: 8 }}>
+          Blocked folders
+        </div>
+        <p className="card-help" style={{ marginTop: -8 }}>
+          Blocks anything launched from inside a folder — e.g. a game library.
+        </p>
+        {config.folderBlocks.map((f) => (
+          <div key={f.path} className="folder-item">
+            <Folder size={18} className="muted" />
+            <span className="folder-path" title={f.path}>
+              {f.path}
+            </span>
+            <div className="seg">
+              <button
+                className={f.mode === 'always' ? 'seg-btn active' : 'seg-btn'}
+                onClick={() => void changeFolderMode(f.path, 'always')}
+              >
+                Always
+              </button>
+              <button
+                className={f.mode === 'schedule' ? 'seg-btn active' : 'seg-btn'}
+                onClick={() => void changeFolderMode(f.path, 'schedule')}
+              >
+                Schedule
+              </button>
+            </div>
+            <button className="btn-remove" title="Remove" onClick={() => void removeFolder(f.path)}>
+              <X size={16} />
+            </button>
+          </div>
+        ))}
+        <button className="add-folder-btn" onClick={() => void addFolder()}>
+          ＋ Add folder…
+        </button>
+      </div>
+    )
+  }
+
+  // ---------------------------------------------------------- Websites
+  function renderSites(): JSX.Element {
+    return (
+      <div className="page page-sites">
+        <div className="card add-card">
+          <div className="card-title">Block a website</div>
+          <p className="card-help">
+            Works across Chrome, Edge &amp; Firefox. Adding or removing one shows a quick Windows
+            admin prompt.
           </p>
-          <div className="row-gap add-row">
+          <div className="add-row">
             <input
-              className="input"
+              className="field"
               placeholder="e.g. reddit.com"
               value={siteInput}
               onChange={(e) => setSiteInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && void addSite()}
             />
-            <button className="btn primary" onClick={() => void addSite()}>
+            <button className="btn accent" onClick={() => void addSite()}>
               Block
             </button>
           </div>
-          <ul className="list scroll">
-            {config.blockedSites.length === 0 && <li className="muted pad">No sites blocked.</li>}
-            {config.blockedSites.map((d) => (
-              <li key={d} className="list-item">
-                <span>{d}</span>
-                <button className="btn danger sm" onClick={() => void removeSite(d)}>
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
+        </div>
 
-        {/* Schedule */}
-        <section className="card">
-          <h3>Schedule</h3>
-          <p className="muted">When apps set to “Schedule” mode are blocked.</p>
-
-          <div className="seg challenge-seg">
-            <button
-              className={schedView === 'weekdays' ? 'seg-btn active' : 'seg-btn'}
-              onClick={() => selectView('weekdays')}
-            >
-              Weekdays 9–5
-            </button>
-            <button
-              className={schedView === 'custom' ? 'seg-btn active' : 'seg-btn'}
-              onClick={() => selectView('custom')}
-            >
-              Custom
+        <div className="section-label">Blocked websites</div>
+        {config.blockedSites.length === 0 && <div className="empty">No sites blocked.</div>}
+        {config.blockedSites.map((d) => (
+          <div key={d} className="site-item">
+            <Globe size={18} className="site-globe" />
+            <span className="site-domain">{d}</span>
+            <button className="btn-remove" title="Remove" onClick={() => void removeSite(d)}>
+              <X size={16} />
             </button>
           </div>
+        ))}
+      </div>
+    )
+  }
 
-          {schedView === 'weekdays' && (
-            <p className="sched-summary">
-              Blocking <strong>Monday–Friday</strong>, 9:00 AM – 5:00 PM.
-            </p>
-          )}
+  // ---------------------------------------------------------- Schedule
+  function renderSchedule(): JSX.Element {
+    return (
+      <div className="page page-schedule">
+        <p className="sched-intro">
+          When apps set to <strong>Schedule</strong> mode are blocked. Outside these hours they’re
+          free.
+        </p>
 
-          {schedView === 'custom' && (
-            <>
-              <div className="quick-add">
-                <div className="day-chips">
-                  {DAY_LABELS.map((label, d) => (
-                    <button
-                      key={d}
-                      className={qaDays.has(d) ? 'chip active' : 'chip'}
-                      onClick={() =>
-                        setQaDays((prev) => {
-                          const next = new Set(prev)
-                          if (next.has(d)) next.delete(d)
-                          else next.add(d)
-                          return next
-                        })
-                      }
-                    >
-                      {label[0]}
-                    </button>
-                  ))}
-                </div>
-                <div className="row-gap">
-                  <input type="time" value={qaStart} onChange={(e) => setQaStart(e.target.value)} />
-                  <span>–</span>
-                  <input type="time" value={qaEnd} onChange={(e) => setQaEnd(e.target.value)} />
-                  <button className="btn ghost sm" onClick={applyQuickAdd}>
-                    Add to selected days
-                  </button>
-                </div>
+        <div className="seg" style={{ alignSelf: 'flex-start' }}>
+          <button
+            className={schedView === 'weekdays' ? 'seg-btn active' : 'seg-btn'}
+            onClick={() => selectView('weekdays')}
+          >
+            Weekdays 9–5
+          </button>
+          <button
+            className={schedView === 'custom' ? 'seg-btn active' : 'seg-btn'}
+            onClick={() => selectView('custom')}
+          >
+            Custom
+          </button>
+        </div>
+
+        <div className="day-card">
+          {DAY_ORDER.map((day) => {
+            const ranges = (draft![String(day)] ?? []).slice().sort((a, b) => toMinutes(a.start) - toMinutes(b.start))
+            const on = ranges.length > 0
+            const first = ranges[0]
+            return (
+              <div key={day} className={on ? 'day-row on' : 'day-row'}>
+                <button
+                  className={on ? 'toggle on' : 'toggle'}
+                  onClick={() => toggleDay(day)}
+                  title={on ? 'Turn off' : 'Turn on'}
+                >
+                  <span className="toggle-knob" />
+                </button>
+                <span className="day-name">{DAY_LABELS[day]}</span>
+                {on ? (
+                  <span className="day-range">
+                    {first.start} — {first.end}
+                    {ranges.length > 1 ? `  +${ranges.length - 1}` : ''}
+                  </span>
+                ) : (
+                  <span className="day-range off">Not blocked</span>
+                )}
               </div>
+            )
+          })}
+        </div>
 
-              <div className="schedule">
-                {DAY_LABELS.map((label, day) => {
-                  const ranges = draft[String(day)] ?? []
+        {schedView === 'custom' && (
+          <>
+            <div className="quick-add">
+              <div className="day-chips">
+                {DAY_ORDER.map((d) => (
+                  <button
+                    key={d}
+                    className={qaDays.has(d) ? 'chip active' : 'chip'}
+                    onClick={() =>
+                      setQaDays((prev) => {
+                        const next = new Set(prev)
+                        if (next.has(d)) next.delete(d)
+                        else next.add(d)
+                        return next
+                      })
+                    }
+                  >
+                    {DAY_LABELS[d][0]}
+                  </button>
+                ))}
+              </div>
+              <div className="time-row">
+                <input
+                  className="field"
+                  type="time"
+                  value={qaStart}
+                  onChange={(e) => setQaStart(e.target.value)}
+                />
+                <span className="muted">–</span>
+                <input
+                  className="field"
+                  type="time"
+                  value={qaEnd}
+                  onChange={(e) => setQaEnd(e.target.value)}
+                />
+                <button className="btn ghost sm" onClick={applyQuickAdd}>
+                  Add to selected days
+                </button>
+              </div>
+            </div>
+
+            <div className="card">
+              <div className="custom-days">
+                {DAY_ORDER.map((day) => {
+                  const ranges = draft![String(day)] ?? []
                   return (
-                    <div key={day} className="sched-day">
-                      <div className="sched-day-label">{label}</div>
-                      <div className="sched-ranges">
+                    <div key={day} className="custom-day">
+                      <div className="custom-day-label">{DAY_LABELS[day]}</div>
+                      <div className="custom-ranges">
                         {ranges.map((r, i) => {
                           const invalid = toMinutes(r.end) <= toMinutes(r.start)
                           return (
-                            <div key={i} className={invalid ? 'sched-range invalid' : 'sched-range'}>
+                            <div
+                              key={i}
+                              className={invalid ? 'custom-range invalid' : 'custom-range'}
+                            >
                               <input
+                                className="field"
                                 type="time"
                                 value={r.start}
                                 onChange={(e) =>
@@ -847,8 +1026,9 @@ export default function App(): JSX.Element {
                                   })
                                 }
                               />
-                              <span>–</span>
+                              <span className="muted">–</span>
                               <input
+                                className="field"
                                 type="time"
                                 value={r.end}
                                 onChange={(e) =>
@@ -859,11 +1039,13 @@ export default function App(): JSX.Element {
                                 }
                               />
                               <button
-                                className="btn danger sm"
+                                className="btn-remove"
                                 title="Remove"
-                                onClick={() => mutateDay(day, (rs) => rs.filter((_, j) => j !== i))}
+                                onClick={() =>
+                                  mutateDay(day, (rs) => rs.filter((_, j) => j !== i))
+                                }
                               >
-                                ✕
+                                <X size={15} />
                               </button>
                             </div>
                           )
@@ -874,50 +1056,142 @@ export default function App(): JSX.Element {
                             mutateDay(day, (rs) => [...rs, { start: '09:00', end: '17:00' }])
                           }
                         >
-                          + Add
+                          ＋ Add
                         </button>
                       </div>
                     </div>
                   )
                 })}
               </div>
-            </>
-          )}
+            </div>
+          </>
+        )}
 
-          <div className="divider" />
-          <div className="sched-footer">
-            <button className="btn ghost sm" onClick={clearSchedule}>
-              Clear all
+        <div className="sched-footer">
+          <button className="btn ghost sm" onClick={clearSchedule}>
+            Clear all
+          </button>
+          <div className="time-row">
+            {dirty && <span className="muted">Unsaved changes</span>}
+            <button className="btn accent" disabled={!dirty} onClick={() => void saveSchedule()}>
+              Save schedule
             </button>
-            <div className="row-gap">
-              {dirty && <span className="muted">Unsaved changes</span>}
-              <button className="btn primary" disabled={!dirty} onClick={() => void saveSchedule()}>
-                Save schedule
-              </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ---------------------------------------------------------- Progress
+  function renderProgress(): JSX.Element {
+    const milestone = nextMilestone(streak)
+    const remaining = Math.max(0, milestone - streak)
+    const topMax = Math.max(1, ...stats.topApps.map((a) => a.count))
+    return (
+      <div className="page page-progress">
+        <div className="streak-hero">
+          <div className="streak-hero-left">
+            <div className="streak-hero-num">
+              {streak} <span style={{ fontSize: '34px' }}>🔥</span>
+            </div>
+            <div className="streak-hero-cap">day streak</div>
+          </div>
+          <div className="streak-hero-right">
+            <div className="milestone-title">Next milestone: {milestone}-day streak</div>
+            <div className="milestone-bar">
+              <div
+                className="milestone-fill"
+                style={{ width: `${Math.min(100, (streak / milestone) * 100)}%` }}
+              />
+            </div>
+            <div className="milestone-help">
+              {remaining === 0
+                ? 'Milestone reached — keep the streak alive.'
+                : `${remaining} ${remaining === 1 ? 'day' : 'days'} to go — keep it up.`}
             </div>
           </div>
-        </section>
+        </div>
 
-        {/* Activity */}
-        <section className="card">
-          <h3>Recent blocks</h3>
-          <ul className="list scroll">
-            {killLog.length === 0 && <li className="muted pad">Nothing killed yet.</li>}
-            {killLog.map((k, i) => (
-              <li key={i} className="list-item">
-                <span>{k.name}</span>
-                <span className="muted">{new Date(k.time).toLocaleTimeString()}</span>
-              </li>
+        <div className="stat-grid">
+          <div className="stat-tile">
+            <div className="stat-num">{stats.weekTotal}</div>
+            <div className="stat-label">resisted this week</div>
+          </div>
+          <div className="stat-tile">
+            <div className="stat-num">{stats.totalBlocks}</div>
+            <div className="stat-label">blocks all-time</div>
+          </div>
+          <div className="stat-tile">
+            <div className="stat-num">
+              {reclaimedHours.toFixed(1)}
+              <span className="unit">h</span>
+            </div>
+            <div className="stat-label">time reclaimed</div>
+          </div>
+        </div>
+
+        <div className="two-col">
+          <div className="card">
+            <div className="card-head">
+              <div className="card-title">Most resisted</div>
+            </div>
+            {stats.topApps.length === 0 && (
+              <div className="empty">No blocks yet — your wins will show up here.</div>
+            )}
+            {stats.topApps.map((a) => (
+              <div key={a.name} className="resist-row">
+                <div className="resist-head">
+                  <span>{prettyName(a.name)}</span>
+                  <span className="resist-count">{a.count}×</span>
+                </div>
+                <div className="resist-track">
+                  <div
+                    className="resist-fill"
+                    style={{ width: `${(a.count / topMax) * 100}%` }}
+                  />
+                </div>
+              </div>
             ))}
-          </ul>
-        </section>
+          </div>
 
-        {/* Settings */}
-        <section className="card">
-          <h3>Unlock challenge</h3>
-          <p className="muted">What you must type to weaken the block while it’s enforcing.</p>
+          <div className="card">
+            <div className="card-head">
+              <div className="card-title">Badges</div>
+            </div>
+            <div className="badge-grid">
+              {BADGES.map((bd) => {
+                const earned = streak >= bd.need
+                return (
+                  <div
+                    key={bd.name}
+                    className={earned ? 'badge-tile earned' : 'badge-tile locked'}
+                  >
+                    <div className="badge-emoji">{bd.emoji}</div>
+                    <div className="badge-name">{bd.name}</div>
+                    <div className="badge-status">
+                      {earned ? 'Earned' : `${bd.need - streak} days to go`}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
-          <div className="seg challenge-seg">
+  // ---------------------------------------------------------- Settings
+  function renderSettings(): JSX.Element {
+    return (
+      <div className="page page-settings">
+        {/* Unlock challenge */}
+        <div className="card">
+          <div className="card-title">Unlock challenge</div>
+          <p className="card-help">
+            What you must type to weaken a block while it’s enforcing. Friction is the feature.
+          </p>
+          <div className="seg" style={{ marginTop: 12 }}>
             {CHALLENGE_TYPES.map((t) => (
               <button
                 key={t.key}
@@ -930,105 +1204,114 @@ export default function App(): JSX.Element {
           </div>
 
           {chType === 'words' && (
-            <div className="row-gap add-row">
+            <div className="inline-row">
               <input
-                className="input mini"
+                className="field mini"
                 type="number"
                 min={5}
                 max={300}
                 value={chWords}
                 onChange={(e) => setChWords(Number(e.target.value))}
               />
-              <span className="muted">random words to type</span>
+              <span className="inline-label">random words to type</span>
             </div>
           )}
           {chType === 'chars' && (
-            <div className="row-gap add-row">
+            <div className="inline-row">
               <input
-                className="input mini"
+                className="field mini"
                 type="number"
                 min={10}
                 max={2000}
                 value={chLen}
                 onChange={(e) => setChLen(Number(e.target.value))}
               />
-              <span className="muted">random characters to type</span>
+              <span className="inline-label">characters to type</span>
             </div>
           )}
           {chType === 'custom' && (
             <textarea
-              className="challenge-input custom-input"
+              className="field"
+              style={{ marginTop: 12 }}
               placeholder="e.g. I am choosing to game as a healthy break, not an escape from what I should be doing."
               value={chCustom}
               onChange={(e) => setChCustom(e.target.value)}
             />
           )}
           {chType === 'timer' && (
-            <div className="row-gap add-row">
+            <div className="inline-row">
               <input
-                className="input mini"
+                className="field mini"
                 type="number"
                 min={1}
                 max={180}
                 value={chTimer}
                 onChange={(e) => setChTimer(Number(e.target.value))}
               />
-              <span className="muted">minute countdown to unlock</span>
+              <span className="inline-label">minute countdown</span>
             </div>
           )}
 
-          <div className="row-gap end">
-            <button className="btn primary" disabled={!chDirty} onClick={() => void saveChallenge()}>
+          <div className="sched-footer" style={{ marginTop: 14 }}>
+            <span />
+            <button className="btn accent" disabled={!chDirty} onClick={() => void saveChallenge()}>
               Save challenge
             </button>
           </div>
+        </div>
 
-          <div className="divider" />
-          <div className="protection-row">
-            <div>
-              <strong>Stay-on protection</strong>
-              <p className="muted protection-desc">
+        {/* Stay-on protection */}
+        <div className="card">
+          <div className="setting-row">
+            <div className="setting-row-main">
+              <div className="card-title">Stay-on protection</div>
+              <p className="card-help">
                 {config.protectionEnabled
                   ? 'On — starts on login and relaunches itself if closed.'
                   : 'Off — FocusLock can be closed normally.'}
               </p>
             </div>
             <button
-              className={config.protectionEnabled ? 'btn ghost' : 'btn primary'}
+              className={config.protectionEnabled ? 'btn ghost' : 'btn accent'}
               onClick={() => void toggleProtection()}
             >
               {config.protectionEnabled ? 'Turn off' : 'Turn on'}
             </button>
           </div>
-
           <div className="divider" />
-          <button
-            className="btn danger"
-            disabled={config.protectionEnabled}
-            onClick={() => void quit()}
-          >
-            Quit FocusLock
-          </button>
-          {config.protectionEnabled && <p className="muted">Turn off protection to quit.</p>}
-        </section>
+          <div className="setting-row">
+            <p className="card-help" style={{ margin: 0 }}>
+              {config.protectionEnabled
+                ? 'Turn off protection to quit FocusLock.'
+                : 'Close FocusLock entirely.'}
+            </p>
+            <button
+              className="btn danger"
+              disabled={config.protectionEnabled}
+              onClick={() => void quit()}
+            >
+              Quit FocusLock
+            </button>
+          </div>
+        </div>
 
         {/* Panic mode */}
-        <section className="card">
-          <h3>Panic mode</h3>
-          <p className="muted">
-            A one-tap lockdown for when you’re about to relapse — blocks everything for a set time
-            and walks you through a breather. It can’t be cancelled early.
+        <div className="card">
+          <div className="card-title">Panic mode</div>
+          <p className="card-help">
+            A one-tap lockdown for when you’re about to relapse — blocks everything and walks you
+            through a breather. It can’t be cancelled early.
           </p>
-          <div className="row-gap add-row">
+          <div className="inline-row">
             <input
-              className="input mini"
+              className="field mini"
               type="number"
               min={1}
               max={180}
               value={panicMin}
               onChange={(e) => setPanicMin(Number(e.target.value))}
             />
-            <span className="muted">minute lockdown</span>
+            <span className="inline-label">minute lockdown</span>
           </div>
           <label className="checkbox">
             <input
@@ -1038,82 +1321,175 @@ export default function App(): JSX.Element {
             />
             Also close browsers during panic
           </label>
-          <p className="muted panic-mantra-label">Your mantra</p>
+          <p className="card-help" style={{ marginTop: 12, marginBottom: 6 }}>
+            Your mantra
+          </p>
           <textarea
-            className="challenge-input custom-input"
+            className="field"
             value={panicMantra}
             onChange={(e) => setPanicMantra(e.target.value)}
           />
-          <div className="row-gap end">
-            <button className="btn primary" disabled={!panicDirty} onClick={() => void savePanic()}>
+          <div className="sched-footer" style={{ marginTop: 14 }}>
+            <span />
+            <button className="btn accent" disabled={!panicDirty} onClick={() => void savePanic()}>
               Save panic settings
             </button>
           </div>
-        </section>
+        </div>
 
-        {/* Notifications & feedback */}
-        <section className="card">
-          <h3>Notifications &amp; feedback</h3>
-          <p className="muted">Message shown in the notification when an app gets blocked.</p>
-          <div className="row-gap add-row">
+        {/* Notifications */}
+        <div className="card">
+          <div className="card-title">Block notification</div>
+          <p className="card-help">Message shown in the notification when an app gets blocked.</p>
+          <div className="add-row">
             <input
-              className="input"
+              className="field"
               maxLength={200}
               value={blockMsg}
               onChange={(e) => setBlockMsg(e.target.value)}
             />
-            <button className="btn primary" disabled={!blockMsgDirty} onClick={() => void saveBlockMsg()}>
+            <button className="btn accent" disabled={!blockMsgDirty} onClick={() => void saveBlockMsg()}>
               Save
             </button>
           </div>
+        </div>
 
-          <div className="divider" />
-          <div className="row-gap">
-            <button className="btn ghost" onClick={() => void window.api.sendFeedback()}>
-              Send feedback
-            </button>
-            <button className="btn ghost" onClick={() => void window.api.openLogs()}>
-              Open logs
-            </button>
+        {/* Wide actions */}
+        <div className="wide-actions">
+          <button className="btn ghost block" onClick={() => setLockoutPreview(true)}>
+            Preview block screen
+          </button>
+          <button className="btn ghost block" onClick={() => setReplayOnb(true)}>
+            Replay setup walkthrough
+          </button>
+        </div>
+
+        {/* Footer */}
+        <div className="settings-footer">
+          <button className="btn ghost" onClick={() => void window.api.sendFeedback()}>
+            Send feedback
+          </button>
+          <button className="btn ghost" onClick={() => void window.api.openLogs()}>
+            Open logs
+          </button>
+          <span className="version">FocusLock v{version}</span>
+        </div>
+      </div>
+    )
+  }
+
+  function renderSection(): JSX.Element {
+    switch (activeTab) {
+      case 'home':
+        return renderHome()
+      case 'apps':
+        return renderApps()
+      case 'sites':
+        return renderSites()
+      case 'schedule':
+        return renderSchedule()
+      case 'progress':
+        return renderProgress()
+      case 'settings':
+        return renderSettings()
+    }
+  }
+
+  return (
+    <div className="shell">
+      {notice && <div className="toast">{notice}</div>}
+
+      {/* Icon rail */}
+      <nav className="rail">
+        <div className="rail-logo">
+          <Shield size={22} />
+        </div>
+        {NAV.map(({ key, Icon }) => (
+          <button
+            key={key}
+            className={activeTab === key ? 'rail-btn active' : 'rail-btn'}
+            onClick={() => setActiveTab(key)}
+            title={key}
+          >
+            <span className="rail-pill" />
+            {activeTab === key && <span className="rail-accent" />}
+            <Icon size={21} />
+          </button>
+        ))}
+        <button
+          className={activeTab === 'settings' ? 'rail-btn bottom active' : 'rail-btn bottom'}
+          onClick={() => setActiveTab('settings')}
+          title="settings"
+        >
+          <span className="rail-pill" />
+          {activeTab === 'settings' && <span className="rail-accent" />}
+          <Sliders size={21} />
+        </button>
+      </nav>
+
+      {/* Right column */}
+      <div className="main-col">
+        <header className="topbar">
+          <div className="topbar-left">
+            <span className="topbar-title">{sectionMeta.label}</span>
+            <span className="topbar-sub">{sectionMeta.sub}</span>
           </div>
-          <p className="muted version-line">FocusLock v{version}</p>
-        </section>
-      </main>
+          <div className="topbar-right">
+            <span className="clock">{clockStr}</span>
+            <button
+              className={paused ? 'btn pause on' : 'btn pause'}
+              onClick={() => void togglePause()}
+            >
+              {paused ? 'Resume blocking' : 'Pause'}
+            </button>
+            <button className="btn panic" onClick={() => void triggerPanic()}>
+              PANIC
+            </button>
+            <div className="avatar">{avatarLetter}</div>
+          </div>
+        </header>
 
-      {/* Gaming launcher detection popup */}
+        <div className="content">
+          <div className="section" key={activeTab}>
+            {renderSection()}
+          </div>
+        </div>
+      </div>
+
+      {/* Game launchers picker */}
       {showGames && (
         <div className="modal-backdrop" onClick={() => setShowGames(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="card-head">
+            <div className="picker-head">
               <h2>Game launchers on this PC</h2>
               <button className="btn ghost sm" onClick={() => void scanGames()}>
                 Rescan
               </button>
             </div>
-            <p className="muted">One click to block. You usually only need this once.</p>
-            <ul className="list scroll games-list">
-              {!games && <li className="muted pad">Scanning…</li>}
+            <p className="card-help">One click to block. You usually only need this once.</p>
+            <ul className="picker-list">
+              {!games && <li className="empty">Scanning…</li>}
               {games &&
                 games.map((g) => (
-                  <li key={g.exe} className="list-item">
-                    <span className="game-name">
+                  <li key={g.exe} className="picker-item">
+                    <span className="pick-name">
                       {g.label}
                       <span className={`badge badge-${g.status.replace(/\s/g, '-')}`}>
                         {g.status}
                       </span>
-                      <span className="muted exe-name">{g.exe}</span>
+                      <span className="exe-name">{g.exe}</span>
                     </span>
                     {g.blocked ? (
                       <span className="muted">Blocked ✓</span>
                     ) : (
-                      <button className="btn primary sm" onClick={() => void addApp(g.exe)}>
+                      <button className="btn accent sm" onClick={() => void addApp(g.exe)}>
                         Block
                       </button>
                     )}
                   </li>
                 ))}
             </ul>
-            <div className="row-gap end">
+            <div className="modal-actions">
               <button className="btn ghost" onClick={() => setShowGames(false)}>
                 Close
               </button>
@@ -1122,34 +1498,34 @@ export default function App(): JSX.Element {
         </div>
       )}
 
-      {/* Running apps popup */}
+      {/* Running apps picker */}
       {showRunning && (
         <div className="modal-backdrop" onClick={() => setShowRunning(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="card-head">
+            <div className="picker-head">
               <h2>Running apps</h2>
               <button className="btn ghost sm" onClick={() => void loadRunning()}>
                 Refresh
               </button>
             </div>
             <input
-              className="input"
+              className="field"
               placeholder="Filter…"
               value={runningFilter}
               onChange={(e) => setRunningFilter(e.target.value)}
             />
-            <ul className="list scroll games-list">
-              {loadingRunning && <li className="muted pad">Loading…</li>}
+            <ul className="picker-list">
+              {loadingRunning && <li className="empty">Loading…</li>}
               {!loadingRunning &&
                 runningFiltered.map((n) => {
                   const already = blockedSet.has(n.toLowerCase())
                   return (
-                    <li key={n} className="list-item">
-                      <span>{n}</span>
+                    <li key={n} className="picker-item">
+                      <span className="pick-name">{n}</span>
                       {already ? (
                         <span className="muted">Blocked ✓</span>
                       ) : (
-                        <button className="btn primary sm" onClick={() => void addApp(n)}>
+                        <button className="btn accent sm" onClick={() => void addApp(n)}>
                           Block
                         </button>
                       )}
@@ -1157,10 +1533,10 @@ export default function App(): JSX.Element {
                   )
                 })}
               {!loadingRunning && runningFiltered.length === 0 && (
-                <li className="muted pad">No matches.</li>
+                <li className="empty">No matches.</li>
               )}
             </ul>
-            <div className="row-gap end">
+            <div className="modal-actions">
               <button className="btn ghost" onClick={() => setShowRunning(false)}>
                 Close
               </button>
@@ -1175,7 +1551,17 @@ export default function App(): JSX.Element {
           kind={challenge.kind}
           text={challenge.text}
           endsAt={challenge.endsAt}
+          context={challenge.context}
           onResolve={challenge.onResolve}
+        />
+      )}
+
+      {lockoutPreview && (
+        <Lockout
+          appName={config.blocklist[0]?.name ? prettyName(config.blocklist[0].name) : 'Steam'}
+          streak={streak}
+          onClose={() => setLockoutPreview(false)}
+          onUnlock={() => void previewUnlock()}
         />
       )}
 
@@ -1184,6 +1570,15 @@ export default function App(): JSX.Element {
           until={state.panic.until}
           mantra={config.panic.mantra}
           onDone={() => void refresh()}
+        />
+      )}
+
+      {replayOnb && (
+        <Onboarding
+          onDone={() => {
+            setReplayOnb(false)
+            void refresh()
+          }}
         />
       )}
     </div>

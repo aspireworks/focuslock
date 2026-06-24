@@ -99,7 +99,7 @@ export function Onboarding({ onDone }: Props): JSX.Element {
             </p>
             <p className="muted">You’re an early part of building this. Thank you for that.</p>
             <div className="onb-actions">
-              <button className="btn primary" onClick={next}>
+              <button className="btn accent" onClick={next}>
                 I’m in →
               </button>
             </div>
@@ -117,7 +117,7 @@ export function Onboarding({ onDone }: Props): JSX.Element {
               First things first: <strong>what should I call you?</strong>
             </p>
             <input
-              className="input onb-input"
+              className="field onb-input"
               placeholder="Your name"
               value={name}
               autoFocus
@@ -128,7 +128,7 @@ export function Onboarding({ onDone }: Props): JSX.Element {
               <button className="btn ghost" onClick={back}>
                 Back
               </button>
-              <button className="btn primary" onClick={next}>
+              <button className="btn accent" onClick={next}>
                 Continue →
               </button>
             </div>
@@ -143,9 +143,9 @@ export function Onboarding({ onDone }: Props): JSX.Element {
               machine — pick the ones you want to lock down.
             </p>
             <div className="onb-list">
-              {!games && <div className="muted pad">Scanning your computer…</div>}
+              {!games && <div className="empty">Scanning your computer…</div>}
               {games && detected.length === 0 && (
-                <div className="muted pad">
+                <div className="empty">
                   I didn’t spot any common launchers — no worries, you can add apps anytime from the
                   dashboard.
                 </div>
@@ -157,10 +157,8 @@ export function Onboarding({ onDone }: Props): JSX.Element {
                   onClick={() => toggle(apps, g.exe, setApps)}
                 >
                   <span className="onb-check">{apps.has(g.exe) ? '✓' : ''}</span>
-                  <span>
-                    {g.label}
-                    <span className="muted exe-name">{g.exe}</span>
-                  </span>
+                  <span className="onb-pick-name">{g.label}</span>
+                  <span className="exe-name">{g.exe}</span>
                 </button>
               ))}
             </div>
@@ -168,7 +166,7 @@ export function Onboarding({ onDone }: Props): JSX.Element {
               <button className="btn ghost" onClick={back}>
                 Back
               </button>
-              <button className="btn primary" onClick={next}>
+              <button className="btn accent" onClick={next}>
                 Continue →
               </button>
             </div>
@@ -204,7 +202,7 @@ export function Onboarding({ onDone }: Props): JSX.Element {
               <button className="btn ghost" onClick={back}>
                 Back
               </button>
-              <button className="btn primary" onClick={next}>
+              <button className="btn accent" onClick={next}>
                 Continue →
               </button>
             </div>
@@ -240,9 +238,9 @@ export function Onboarding({ onDone }: Props): JSX.Element {
                 </button>
               ))}
             </div>
-            <div className="row-gap add-row">
+            <div className="inline-row">
               <input
-                className="input"
+                className="field"
                 placeholder="add another, e.g. reddit.com"
                 value={custom}
                 onChange={(e) => setCustom(e.target.value)}
@@ -256,7 +254,7 @@ export function Onboarding({ onDone }: Props): JSX.Element {
               <button className="btn ghost" onClick={back}>
                 Back
               </button>
-              <button className="btn primary" onClick={next}>
+              <button className="btn accent" onClick={next}>
                 {sites.size > 0 ? 'Continue →' : 'Skip for now →'}
               </button>
             </div>
@@ -277,7 +275,7 @@ export function Onboarding({ onDone }: Props): JSX.Element {
               <button className="btn ghost" onClick={back} disabled={busy}>
                 Back
               </button>
-              <button className="btn primary" onClick={() => void finish()} disabled={busy}>
+              <button className="btn accent" onClick={() => void finish()} disabled={busy}>
                 {busy ? 'Setting up…' : 'Enter FocusLock →'}
               </button>
             </div>

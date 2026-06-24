@@ -7,6 +7,7 @@
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
+    "preview:web": "vite --config vite.preview.config.ts",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "make-icon": "node scripts/make-icon.cjs",

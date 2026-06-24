@@ -1,30 +1,34 @@
-import { useCallback, useEffect, useState, type SyntheticEvent } from 'react'
+import { useCallback, useEffect, useMemo, useState, type SyntheticEvent } from 'react'
 
 interface Props {
   id: string
   kind: 'text' | 'timer'
   text?: string
   endsAt?: number
+  /** Why the challenge is being shown, e.g. "Removing Steam". */
+  context?: string
   onResolve: (token: string | null) => void
 }
 
 const block = (e: SyntheticEvent): void => e.preventDefault()
 
-export function Challenge({ id, kind, text, endsAt, onResolve }: Props): JSX.Element {
+export function Challenge({ id, kind, text, endsAt, context, onResolve }: Props): JSX.Element {
   if (kind === 'timer') {
-    return <TimerChallenge id={id} endsAt={endsAt ?? 0} onResolve={onResolve} />
+    return <TimerChallenge id={id} endsAt={endsAt ?? 0} context={context} onResolve={onResolve} />
   }
-  return <TextChallenge id={id} text={text ?? ''} onResolve={onResolve} />
+  return <TextChallenge id={id} text={text ?? ''} context={context} onResolve={onResolve} />
 }
 
 /** Countdown that auto-unlocks when it elapses. Time is verified by the main process. */
 function TimerChallenge({
   id,
   endsAt,
+  context,
   onResolve
 }: {
   id: string
   endsAt: number
+  context?: string
   onResolve: (token: string | null) => void
 }): JSX.Element {
   const [remaining, setRemaining] = useState(() => Math.max(0, endsAt - Date.now()))
@@ -53,18 +57,18 @@ function TimerChallenge({
   return (
     <div className="modal-backdrop">
       <div className="modal">
-        <h2>Wait it out</h2>
-        <p className="muted">
-          The block lifts when this timer reaches zero. It can’t be skipped — that pause is the
-          point. You can leave this window open in the background.
+        <div className="modal-title">Wait it out</div>
+        <p className="modal-context">
+          {context ? `${context}. ` : ''}The block lifts when this timer reaches zero — it can’t be
+          skipped. That pause is the point.
         </p>
         <div className="countdown">
           {mm}:{ss}
         </div>
-        <div className="challenge-footer">
-          <span className="muted">{remaining <= 0 ? 'Unlocking…' : 'Counting down…'}</span>
+        <div className="modal-footer">
+          <span className="count">{remaining <= 0 ? 'Unlocking…' : 'Counting down…'}</span>
           <button className="btn ghost" onClick={() => onResolve(null)}>
-            Cancel
+            Never mind
           </button>
         </div>
       </div>
@@ -78,10 +82,12 @@ function TimerChallenge({
 function TextChallenge({
   id,
   text,
+  context,
   onResolve
 }: {
   id: string
   text: string
+  context?: string
   onResolve: (token: string | null) => void
 }): JSX.Element {
   const [value, setValue] = useState('')
@@ -108,22 +114,31 @@ function TextChallenge({
 
   const pct = text.length ? Math.round((matched / text.length) * 100) : 0
 
+  // Prefer a word counter (matches the common "random words" challenge); fall back to chars.
+  const counter = useMemo(() => {
+    const totalWords = text.split(/\s+/).filter(Boolean).length
+    if (totalWords > 1) {
+      const typedWords = text.slice(0, matched).split(/\s+/).filter(Boolean).length
+      return `${typedWords} / ${totalWords} words${hasError ? ' — fix the mismatch' : ''}`
+    }
+    return `${matched} / ${text.length}${hasError ? ' — fix the mismatch' : ''}`
+  }, [text, matched, hasError])
+
   return (
     <div className="modal-backdrop">
       <div className="modal">
-        <h2>Type to unlock</h2>
-        <p className="muted">
-          Type the text below <strong>exactly</strong> to make this change. No copy-paste — the time
-          it takes is the point.
+        <div className="modal-title">Unlock challenge</div>
+        <p className="modal-context">
+          {context ? `${context}. ` : ''}Type the text below exactly to continue.
         </p>
 
-        <div className="challenge-text" onCopy={block} onCut={block} onContextMenu={block}>
+        <div className="challenge-target" onCopy={block} onCut={block} onContextMenu={block}>
           <span className="done">{text.slice(0, matched)}</span>
           <span className="todo">{text.slice(matched)}</span>
         </div>
 
         <textarea
-          className={hasError ? 'challenge-input has-error' : 'challenge-input'}
+          className={hasError ? 'challenge-area has-error' : 'challenge-area'}
           value={value}
           autoFocus
           spellCheck={false}
@@ -135,25 +150,22 @@ function TextChallenge({
           placeholder="Type here…"
         />
 
-        <div className="progress">
-          <div className="progress-bar" style={{ width: `${pct}%` }} />
+        <div className="challenge-progress">
+          <div className="challenge-progress-fill" style={{ width: `${pct}%` }} />
         </div>
 
-        <div className="challenge-footer">
-          <span className="muted">
-            {matched} / {text.length}
-            {hasError ? ' — mismatch, fix it' : ''}
-          </span>
-          <div className="row-gap">
+        <div className="modal-footer">
+          <span className="count">{counter}</span>
+          <div className="footer-btns">
             <button className="btn ghost" onClick={() => onResolve(null)}>
-              Cancel
+              Never mind
             </button>
             <button
-              className="btn primary"
+              className="btn accent"
               disabled={!complete || checking}
               onClick={() => void submit()}
             >
-              {checking ? 'Checking…' : 'Unlock'}
+              {checking ? 'Checking…' : 'Continue →'}
             </button>
           </div>
         </div>
