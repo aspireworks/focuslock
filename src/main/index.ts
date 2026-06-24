@@ -2,7 +2,7 @@ import { app, BrowserWindow, Menu, Tray, nativeImage } from 'electron'
 import { join } from 'path'
 import trayIcon from '../../resources/tray.png?asset'
 import { getConfig, initStore } from './store'
-import { isBlockingNow, isPanicActive, startEngine, stopEngine } from './engine'
+import { isBlockingNow, isPanicActive, setOnAppBlocked, startEngine, stopEngine } from './engine'
 import { registerIpc } from './ipc'
 import { applyAutostart, startGuardianLoop, startWatchdog } from './watchdog'
 import { initLogger } from './logger'
@@ -39,6 +39,12 @@ if (isGuardian) {
       createWindow()
       createTray()
       startEngine()
+      // When a blocked app is caught, bring the window forward and show the lockout takeover.
+      setOnAppBlocked((name) => {
+        if (!mainWindow || mainWindow.isDestroyed()) return
+        showWindow()
+        mainWindow.webContents.send('app-blocked', { name })
+      })
       // Stay-on protection: run-on-boot + watchdog when enabled.
       const cfg = getConfig()
       applyAutostart(cfg.protectionEnabled)

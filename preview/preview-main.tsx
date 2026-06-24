@@ -180,7 +180,15 @@ const mock = {
     return ok()
   },
   requestQuit: async () => ok(),
-  onQuitRequested: () => () => {}
+  onQuitRequested: () => () => {},
+  // Preview-only: stash the callback so a test can simulate an engine block via
+  // window.__fireBlock('steam.exe'). The real bridge wires this to a main->renderer event.
+  onAppBlocked: (cb: (name: string) => void) => {
+    ;(window as unknown as { __fireBlock?: (n: string) => void }).__fireBlock = (n) => cb(n)
+    return () => {
+      ;(window as unknown as { __fireBlock?: (n: string) => void }).__fireBlock = undefined
+    }
+  }
 }
 
 ;(window as unknown as { api: typeof mock }).api = mock

@@ -135,6 +135,7 @@ export default function App(): JSX.Element {
 
   // Overlay/preview UI flags
   const [lockoutPreview, setLockoutPreview] = useState(false)
+  const [blockedApp, setBlockedApp] = useState<string | null>(null)
   const [replayOnb, setReplayOnb] = useState(false)
 
   // Schedule editing draft
@@ -465,7 +466,16 @@ export default function App(): JSX.Element {
     setLockoutPreview(false)
   }, [runChallenge])
 
+  const unlockBlocked = useCallback(async () => {
+    const c = await window.api.startChallenge()
+    await runChallenge(c, 'Unlocking anyway')
+    setBlockedApp(null)
+  }, [runChallenge])
+
   useEffect(() => window.api.onQuitRequested(() => void quit()), [quit])
+
+  // The engine pushes this when it catches a blocked app — show the lockout takeover for real.
+  useEffect(() => window.api.onAppBlocked((name) => setBlockedApp(prettyName(name))), [])
 
   // ---- Schedule draft editing ----
   function mutateDay(day: number, fn: (ranges: TimeRange[]) => TimeRange[]): void {
@@ -1618,6 +1628,15 @@ export default function App(): JSX.Element {
           streak={streak}
           onClose={() => setLockoutPreview(false)}
           onUnlock={() => void previewUnlock()}
+        />
+      )}
+
+      {blockedApp && (
+        <Lockout
+          appName={blockedApp}
+          streak={streak}
+          onClose={() => setBlockedApp(null)}
+          onUnlock={() => void unlockBlocked()}
         />
       )}
 

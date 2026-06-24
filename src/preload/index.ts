@@ -81,6 +81,15 @@ const api = {
     return () => {
       ipcRenderer.removeListener('quit-requested', listener)
     }
+  },
+
+  /** Fired when the engine catches a blocked app, to pop the lockout. Returns an unsubscribe fn. */
+  onAppBlocked: (cb: (name: string) => void) => {
+    const listener = (_e: unknown, payload: { name: string }): void => cb(payload?.name ?? '')
+    ipcRenderer.on('app-blocked', listener)
+    return () => {
+      ipcRenderer.removeListener('app-blocked', listener)
+    }
   }
 }
 

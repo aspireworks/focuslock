@@ -53,6 +53,13 @@ function notify(title: string, body: string): void {
   }
 }
 
+// Optional hook: fired (debounced, and never during panic) when a blocked app is caught,
+// so the main process can surface the full-screen lockout takeover in the renderer.
+let appBlockedListener: ((name: string) => void) | null = null
+export function setOnAppBlocked(cb: (name: string) => void): void {
+  appBlockedListener = cb
+}
+
 // One "block event" per app per minute — so relaunch spam doesn't inflate stats or notifications.
 const lastBlockEvent: Record<string, number> = {}
 const BLOCK_EVENT_COOLDOWN = 60_000
@@ -66,6 +73,7 @@ function onBlocked(name: string): void {
   const cfg = getConfig()
   const title = cfg.userName ? `Sorry ${cfg.userName} — ${name} is blocked` : `${name} is blocked`
   notify(title, cfg.blockMessage || 'Back to what matters.')
+  appBlockedListener?.(name) // pop the lockout takeover (same debounce/panic rules as the toast)
 }
 
 function todayStr(): string {
