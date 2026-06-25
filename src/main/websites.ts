@@ -7,8 +7,8 @@ import { join } from 'path'
 const execAsync = promisify(exec)
 
 const HOSTS = 'C:\\Windows\\System32\\drivers\\etc\\hosts'
-const MARK_START = '# === FocusLock start (managed - do not edit) ==='
-const MARK_END = '# === FocusLock end ==='
+const MARK_START = '# === Spawncamp start (managed - do not edit) ==='
+const MARK_END = '# === Spawncamp end ==='
 
 /** Strip protocol/path/www and validate. Returns the bare domain, or null if invalid. */
 export function normalizeDomain(input: string): string | null {

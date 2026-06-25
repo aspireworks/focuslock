@@ -1,6 +1,6 @@
 // Standalone test of the hosts-merge + domain-normalize logic (mirrors websites.ts).
-const MARK_START = '# === FocusLock start (managed - do not edit) ==='
-const MARK_END = '# === FocusLock end ==='
+const MARK_START = '# === Spawncamp start (managed - do not edit) ==='
+const MARK_END = '# === Spawncamp end ==='
 
 function normalizeDomain(input) {
   let s = String(input).trim().toLowerCase()
@@ -52,13 +52,13 @@ check('has markers', h1.includes(MARK_START) && h1.includes(MARK_END))
 
 // idempotency: applying again must not duplicate the managed block
 const h2 = buildHosts(h1, ['reddit.com', 'x.com'])
-check('no duplicate start markers', (h2.match(/FocusLock start/g) || []).length === 1)
+check('no duplicate start markers', (h2.match(/Spawncamp start/g) || []).length === 1)
 check('replaced block has both domains', h2.includes('0.0.0.0 x.com') && h2.includes('0.0.0.0 reddit.com'))
 check('still preserves user entries', h2.includes('10.0.0.5 nas.local'))
 
 // clearing: empty domains removes the managed block but keeps user entries
 const h3 = buildHosts(h2, [])
-check('cleared block gone', !h3.includes('FocusLock start') && !h3.includes('0.0.0.0 reddit.com'))
+check('cleared block gone', !h3.includes('Spawncamp start') && !h3.includes('0.0.0.0 reddit.com'))
 check('user entries survive clear', h3.includes('127.0.0.1 localhost') && h3.includes('10.0.0.5 nas.local'))
 
 console.log(`\n${pass} passed, ${fail} failed`)

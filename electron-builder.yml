@@ -1,5 +1,5 @@
-appId: com.focuslock.app
-productName: FocusLock
+appId: com.spawncamp.app
+productName: Spawncamp
 directories:
   buildResources: build
 files:
@@ -20,6 +20,6 @@ nsis:
   perMachine: false
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: always
-  shortcutName: FocusLock
-  uninstallDisplayName: FocusLock
+  shortcutName: Spawncamp
+  uninstallDisplayName: Spawncamp
   artifactName: ${productName}-${version}-setup.${ext}

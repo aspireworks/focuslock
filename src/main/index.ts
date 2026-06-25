@@ -11,7 +11,7 @@ import { initLogger } from './logger'
 // (a known Electron flakiness) from taking down the blocker.
 app.disableHardwareAcceleration()
 // Needed for Windows toast notifications to display with the app's identity.
-app.setAppUserModelId('FocusLock')
+app.setAppUserModelId('Spawncamp')
 
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
@@ -53,7 +53,7 @@ if (isGuardian) {
 
     // Keep running in the tray even when the window is closed.
     app.on('window-all-closed', () => {
-      // intentionally do nothing on Windows — FocusLock lives in the tray
+      // intentionally do nothing on Windows — Spawncamp lives in the tray
     })
   }
 }
@@ -64,7 +64,7 @@ function createWindow(): void {
     height: 720,
     minWidth: 720,
     minHeight: 560,
-    title: 'FocusLock',
+    title: 'Spawncamp',
     autoHideMenuBar: true,
     backgroundColor: '#0f1117',
     icon: trayIcon,
@@ -98,12 +98,12 @@ function createTray(): void {
   try {
     const icon = nativeImage.createFromPath(trayIcon)
     tray = new Tray(icon.isEmpty() ? nativeImage.createEmpty() : icon)
-    tray.setToolTip('FocusLock')
+    tray.setToolTip('Spawncamp')
     tray.setContextMenu(
       Menu.buildFromTemplate([
-        { label: 'Open FocusLock', click: showWindow },
+        { label: 'Open Spawncamp', click: showWindow },
         { type: 'separator' },
-        { label: 'Quit FocusLock', click: requestQuit }
+        { label: 'Quit Spawncamp', click: requestQuit }
       ])
     )
     tray.on('click', showWindow)

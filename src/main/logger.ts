@@ -56,7 +56,7 @@ export function initLogger(role: 'main' | 'guardian'): void {
   } catch {
     /* ignore */
   }
-  logFile = join(logsDir, role === 'guardian' ? 'guardian.log' : 'focuslock.log')
+  logFile = join(logsDir, role === 'guardian' ? 'guardian.log' : 'spawncamp.log')
 
   const orig = {
     log: console.log.bind(console),
@@ -85,6 +85,6 @@ export function initLogger(role: 'main' | 'guardian'): void {
   process.on('unhandledRejection', (e) => writeLine('FATAL', ['unhandledRejection', e]))
 
   writeLine('INFO', [
-    `=== FocusLock ${app.getVersion()} (${role}) started — packaged=${app.isPackaged} ===`
+    `=== Spawncamp ${app.getVersion()} (${role}) started — packaged=${app.isPackaged} ===`
   ])
 }

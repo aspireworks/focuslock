@@ -90,9 +90,9 @@ export function registerIpc(): void {
   ipcMain.handle('open-logs', () => shell.openPath(getLogsDir()))
 
   ipcMain.handle('send-feedback', () => {
-    const subject = encodeURIComponent(`FocusLock feedback (v${app.getVersion()})`)
+    const subject = encodeURIComponent(`Spawncamp feedback (v${app.getVersion()})`)
     const body = encodeURIComponent(
-      `What's working, what's broken, what you wish it did:\n\n\n\n---\nFocusLock v${app.getVersion()}`
+      `What's working, what's broken, what you wish it did:\n\n\n\n---\nSpawncamp v${app.getVersion()}`
     )
     return shell.openExternal(`mailto:${FEEDBACK_EMAIL}?subject=${subject}&body=${body}`)
   })

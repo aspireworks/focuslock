@@ -1,5 +1,5 @@
 {
-  "name": "focuslock",
+  "name": "spawncamp",
   "version": "1.0.0",
   "description": "A Cold Turkey-style app blocker: scheduled blocking with a timed typing challenge.",
   "author": "Connor",
@@ -10,9 +10,9 @@
     "preview:web": "vite --config vite.preview.config.ts",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
-    "make-icon": "node scripts/make-icon.cjs",
+    "make-icon": "node scripts/make-logo-icons.cjs",
     "typecheck": "tsc --noEmit",
-    "dist": "node scripts/make-icon.cjs && electron-vite build && electron-builder --win"
+    "dist": "node scripts/make-logo-icons.cjs && electron-vite build && electron-builder --win"
   },
   "dependencies": {
     "react": "^18.3.1",

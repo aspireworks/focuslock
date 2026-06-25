@@ -1,5 +1,5 @@
 /* ============================================================
-   FocusLock — "Launcher" redesign
+   Spawncamp — "Launcher" redesign
    Fonts bundled locally for full offline fidelity.
    ============================================================ */
 
@@ -388,6 +388,11 @@ input[type='time'].field {
   color: #fff;
   box-shadow: 0 6px 18px rgba(123, 123, 255, 0.5);
   margin-bottom: 12px;
+}
+.rail-logo-img {
+  width: 26px;
+  height: 26px;
+  display: block;
 }
 .rail-btn {
   position: relative;
@@ -1559,6 +1564,15 @@ input[type='time'].field {
   font-size: 46px;
   text-align: center;
   margin-bottom: 10px;
+}
+.onb-logo {
+  display: block;
+  width: min(280px, 72%);
+  height: auto;
+  margin: 6px auto 22px;
+}
+.onb-welcome h2 {
+  text-align: center;
 }
 .onb-step h2 {
   margin: 0 0 14px;

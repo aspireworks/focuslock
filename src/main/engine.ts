@@ -322,11 +322,11 @@ async function tick(): Promise<void> {
         const w = warned[key] ?? (warned[key] = { w5: false, w1: false })
         if (limitSec > 300 && remaining <= 300 && !w.w5) {
           w.w5 = true
-          notify('FocusLock', `5 minutes of ${appCfg.name} left today — find a save point.`)
+          notify('Spawncamp', `5 minutes of ${appCfg.name} left today — find a save point.`)
         }
         if (limitSec > 60 && remaining <= 60 && !w.w1) {
           w.w1 = true
-          notify('FocusLock', `1 minute of ${appCfg.name} left today — wrap it up.`)
+          notify('Spawncamp', `1 minute of ${appCfg.name} left today — wrap it up.`)
         }
       }
     }

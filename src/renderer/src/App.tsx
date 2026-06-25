@@ -3,6 +3,7 @@ import { Challenge } from './Challenge'
 import { PanicOverlay } from './Panic'
 import { Onboarding } from './Onboarding'
 import { Lockout } from './Lockout'
+import logoIcon from './assets/spawncamp-icon.png'
 import {
   BarChart,
   Calendar,
@@ -11,7 +12,6 @@ import {
   Grid,
   Home,
   Pause,
-  Shield,
   ShieldCheck,
   Sliders,
   X
@@ -442,7 +442,7 @@ export default function App(): JSX.Element {
     () =>
       protectedCall(
         (token) => window.api.requestQuit(token) as Promise<ProtectedResult>,
-        'Quitting FocusLock'
+        'Quitting Spawncamp'
       ),
     [protectedCall]
   )
@@ -483,7 +483,7 @@ export default function App(): JSX.Element {
     } else {
       await window.api.setProtection(true)
       await refresh()
-      flash('Protection on — FocusLock will stay running and start on login.')
+      flash('Protection on — Spawncamp will stay running and start on login.')
     }
   }, [protectedCall, refresh, flash])
 
@@ -605,7 +605,7 @@ export default function App(): JSX.Element {
   )
 
   if (!state || !draft) {
-    return <div className="loading">Loading FocusLock…</div>
+    return <div className="loading">Loading Spawncamp…</div>
   }
 
   const { status, config, killLog, paused, version, stats } = state
@@ -1362,7 +1362,7 @@ export default function App(): JSX.Element {
               <p className="card-help">
                 {config.protectionEnabled
                   ? 'On — starts on login and relaunches itself if closed.'
-                  : 'Off — FocusLock can be closed normally.'}
+                  : 'Off — Spawncamp can be closed normally.'}
               </p>
             </div>
             <button
@@ -1376,15 +1376,15 @@ export default function App(): JSX.Element {
           <div className="setting-row">
             <p className="card-help" style={{ margin: 0 }}>
               {config.protectionEnabled
-                ? 'Turn off protection to quit FocusLock.'
-                : 'Close FocusLock entirely.'}
+                ? 'Turn off protection to quit Spawncamp.'
+                : 'Close Spawncamp entirely.'}
             </p>
             <button
               className="btn danger"
               disabled={config.protectionEnabled}
               onClick={() => void quit()}
             >
-              Quit FocusLock
+              Quit Spawncamp
             </button>
           </div>
         </div>
@@ -1466,7 +1466,7 @@ export default function App(): JSX.Element {
           <button className="btn ghost" onClick={() => void window.api.openLogs()}>
             Open logs
           </button>
-          <span className="version">FocusLock v{version}</span>
+          <span className="version">Spawncamp v{version}</span>
         </div>
       </div>
     )
@@ -1496,7 +1496,7 @@ export default function App(): JSX.Element {
       {/* Icon rail */}
       <nav className="rail">
         <div className="rail-logo">
-          <Shield size={22} />
+          <img className="rail-logo-img" src={logoIcon} alt="Spawncamp" />
         </div>
         {NAV.map(({ key, Icon }) => (
           <button

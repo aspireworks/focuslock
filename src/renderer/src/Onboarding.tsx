@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import wordmark from './assets/spawncamp-wordmark.png'
 
 interface GameRow {
   label: string
@@ -95,11 +96,11 @@ export function Onboarding({ onDone }: Props): JSX.Element {
         </div>
 
         {step === 0 && (
-          <div className="onb-step">
-            <div className="onb-emoji">👋</div>
-            <h2>Hey there.</h2>
+          <div className="onb-step onb-welcome">
+            <img className="onb-logo" src={wordmark} alt="Spawncamp" />
+            <h2>Welcome.</h2>
             <p>
-              Before we dive in — a quick heads up. FocusLock is an <strong>early beta</strong>. It’s
+              Before we dive in — a quick heads up. Spawncamp is an <strong>early beta</strong>. It’s
               powerful, but it’s new, so you might bump into a rough edge here and there. If anything
               feels off, there’s a <em>Send feedback</em> button built right in, and I’d genuinely
               love to hear from you.
@@ -331,7 +332,7 @@ export function Onboarding({ onDone }: Props): JSX.Element {
             <div className="onb-emoji">💪</div>
             <h2>That’s it, {who}. You’re set.</h2>
             <p>
-              FocusLock is in your corner now — when the urge hits, it’s got your back. You can change
+              Spawncamp is in your corner now — when the urge hits, it’s got your back. You can change
               anything from the dashboard, and if you ever need to slam the door shut fast, there’s a{' '}
               <strong>Panic</strong> button up top.
             </p>
@@ -341,7 +342,7 @@ export function Onboarding({ onDone }: Props): JSX.Element {
                 Back
               </button>
               <button className="btn accent" onClick={() => void finish()} disabled={busy}>
-                {busy ? 'Setting up…' : 'Enter FocusLock →'}
+                {busy ? 'Setting up…' : 'Enter Spawncamp →'}
               </button>
             </div>
           </div>

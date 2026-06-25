@@ -61,7 +61,7 @@ export interface Config {
   blockMessage: string
   /** For light personalization (greeting, block messages). */
   userName: string
-  /** Self-reported hours/day spent on games before FocusLock. Powers the "time reclaimed" estimate. 0 = not provided/skipped. */
+  /** Self-reported hours/day spent on games before Spawncamp. Powers the "time reclaimed" estimate. 0 = not provided/skipped. */
   dailyGamingHours: number
   /** False until the first-run onboarding wizard is finished. */
   onboardingComplete: boolean
