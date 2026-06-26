@@ -50,6 +50,18 @@ export interface ChallengeConfig {
   timerMinutes: number
 }
 
+/** Daily reaffirmation ritual: each morning the user retypes this to "commit" to the day. */
+export interface CommitmentConfig {
+  /** On by default; can be turned off in Settings. */
+  enabled: boolean
+  /** The statement the user reaffirms (retypes) each morning. */
+  text: string
+  /** "HH:MM" 24h — when the prompt fires (and the app comes forward). */
+  time: string
+  /** dayKey "YYYY-MM-DD" of the last commit; '' = never. Settings never overwrite this. */
+  lastCommittedDate: string
+}
+
 export interface Config {
   blocklist: BlockedApp[]
   folderBlocks: FolderRule[]
@@ -69,10 +81,14 @@ export interface Config {
   schedule: Schedule
   challenge: ChallengeConfig
   panic: PanicConfig
+  commitment: CommitmentConfig
 }
 
 export const DEFAULT_MANTRA =
   'This urge is temporary. I am in control of my choices, and I am choosing the person I want to become. Stepping away right now is strength, not loss.'
+
+export const DEFAULT_COMMITMENT =
+  'I commit to being the hero of my own life and saying no to the distractions that don’t serve me.'
 
 const DEFAULT_CONFIG: Config = {
   blocklist: [],
@@ -87,8 +103,11 @@ const DEFAULT_CONFIG: Config = {
   schedule: {},
   // Word/char counts are tuned to ~3 minutes of typing; the timer default is 5 minutes.
   challenge: { type: 'words', length: 400, wordCount: 140, customText: '', timerMinutes: 5 },
-  panic: { minutes: 5, mantra: DEFAULT_MANTRA, blockBrowsers: true }
+  panic: { minutes: 5, mantra: DEFAULT_MANTRA, blockBrowsers: true },
+  commitment: { enabled: true, text: DEFAULT_COMMITMENT, time: '09:00', lastCommittedDate: '' }
 }
+
+const TIME_RE = /^\d{2}:\d{2}$/
 
 function coerceChallengeType(t: unknown): ChallengeType {
   return t === 'chars' || t === 'custom' || t === 'timer' || t === 'words' ? t : 'words'
@@ -167,6 +186,16 @@ function migrate(raw: unknown): Config {
         mantra: typeof p.mantra === 'string' && p.mantra.trim() ? p.mantra : base.panic.mantra,
         blockBrowsers:
           typeof p.blockBrowsers === 'boolean' ? p.blockBrowsers : base.panic.blockBrowsers
+      }
+    })(),
+    commitment: ((): CommitmentConfig => {
+      const c = (r.commitment ?? {}) as Record<string, unknown>
+      return {
+        enabled: typeof c.enabled === 'boolean' ? c.enabled : base.commitment.enabled,
+        text: typeof c.text === 'string' && c.text.trim() ? c.text : base.commitment.text,
+        time: typeof c.time === 'string' && TIME_RE.test(c.time) ? c.time : base.commitment.time,
+        lastCommittedDate:
+          typeof c.lastCommittedDate === 'string' ? c.lastCommittedDate : ''
       }
     })()
   }

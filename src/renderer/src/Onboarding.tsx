@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import wordmark from './assets/spawncamp-wordmark.png'
+import { DEFAULT_COMMITMENT } from './types'
 
 interface GameRow {
   label: string
@@ -23,7 +24,7 @@ const SITE_SUGGESTIONS = [
   'twitch.tv'
 ]
 
-const TOTAL = 7
+const TOTAL = 8
 
 export function Onboarding({ onDone }: Props): JSX.Element {
   const [step, setStep] = useState(0)
@@ -35,6 +36,8 @@ export function Onboarding({ onDone }: Props): JSX.Element {
   const [mode, setMode] = useState<'always' | 'schedule'>('always')
   const [sites, setSites] = useState<Set<string>>(new Set())
   const [custom, setCustom] = useState('')
+  const [commitText, setCommitText] = useState(DEFAULT_COMMITMENT)
+  const [commitTime, setCommitTime] = useState('09:00')
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
@@ -73,7 +76,9 @@ export function Onboarding({ onDone }: Props): JSX.Element {
       dailyGamingHours: hoursSet ? gamingHours : 0,
       apps: [...apps],
       mode,
-      sites: [...sites]
+      sites: [...sites],
+      commitmentText: commitText.trim(),
+      commitmentTime: commitTime
     })
     onDone()
   }
@@ -328,6 +333,42 @@ export function Onboarding({ onDone }: Props): JSX.Element {
         )}
 
         {step === 6 && (
+          <div className="onb-step">
+            <h2>One promise to yourself, {who}.</h2>
+            <p>
+              The people who make it through don’t rely on willpower in the moment — they decide
+              who they’re being <em>before</em> the urge hits. So I recommend a{' '}
+              <strong>daily commitment</strong>: each morning Spawncamp will pop up and ask you to
+              reaffirm it. Take the stock one or make it yours.
+            </p>
+            <textarea
+              className="field onb-input"
+              maxLength={280}
+              value={commitText}
+              onChange={(e) => setCommitText(e.target.value)}
+            />
+            <div className="inline-row" style={{ marginTop: 12 }}>
+              <input
+                className="field mini"
+                type="time"
+                value={commitTime}
+                onChange={(e) => setCommitTime(e.target.value)}
+              />
+              <span className="inline-label">when it pops up each day</span>
+            </div>
+            <p className="muted">You can change the wording, the time, or turn it off in Settings.</p>
+            <div className="onb-actions">
+              <button className="btn ghost" onClick={back}>
+                Back
+              </button>
+              <button className="btn accent" onClick={next}>
+                Continue →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === 7 && (
           <div className="onb-step">
             <div className="onb-emoji">💪</div>
             <h2>That’s it, {who}. You’re set.</h2>

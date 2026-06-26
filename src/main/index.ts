@@ -3,6 +3,7 @@ import { join } from 'path'
 import trayIcon from '../../resources/tray.png?asset'
 import { getConfig, initStore } from './store'
 import { isBlockingNow, isPanicActive, setOnAppBlocked, startEngine, stopEngine } from './engine'
+import { startCommitmentScheduler } from './commitment'
 import { registerIpc } from './ipc'
 import { applyAutostart, startGuardianLoop, startWatchdog } from './watchdog'
 import { initLogger } from './logger'
@@ -44,6 +45,12 @@ if (isGuardian) {
         if (!mainWindow || mainWindow.isDestroyed()) return
         showWindow()
         mainWindow.webContents.send('app-blocked', { name })
+      })
+      // Each morning, bring the app forward to ask for the daily commitment.
+      startCommitmentScheduler(() => {
+        if (!mainWindow || mainWindow.isDestroyed()) return
+        showWindow()
+        mainWindow.webContents.send('commitment-due')
       })
       // Stay-on protection: run-on-boot + watchdog when enabled.
       const cfg = getConfig()

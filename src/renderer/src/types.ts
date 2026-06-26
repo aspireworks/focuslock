@@ -34,6 +34,17 @@ export interface PanicConfig {
   blockBrowsers: boolean
 }
 
+export interface CommitmentConfig {
+  enabled: boolean
+  text: string
+  time: string
+  lastCommittedDate: string
+}
+
+/** Stock commitment shown on first run (mirrors DEFAULT_COMMITMENT in main/store.ts). */
+export const DEFAULT_COMMITMENT =
+  'I commit to being the hero of my own life and saying no to the distractions that don’t serve me.'
+
 export interface Config {
   blocklist: BlockedApp[]
   folderBlocks: FolderRule[]
@@ -47,6 +58,7 @@ export interface Config {
   schedule: Schedule
   challenge: ChallengeConfig
   panic: PanicConfig
+  commitment: CommitmentConfig
 }
 
 export interface BlockStatus {
@@ -87,6 +99,8 @@ export interface AppState {
   usage: Usage
   panic: { active: boolean; until: number }
   stats: StatsView
+  /** True when today's commitment is due and not yet done (drives the morning overlay). */
+  commitmentDue: boolean
   version: string
 }
 

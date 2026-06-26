@@ -3,6 +3,7 @@ import { Challenge } from './Challenge'
 import { PanicOverlay } from './Panic'
 import { Onboarding } from './Onboarding'
 import { Lockout } from './Lockout'
+import { Commitment } from './Commitment'
 import logoIcon from './assets/spawncamp-icon.png'
 import {
   BarChart,
@@ -203,6 +204,11 @@ export default function App(): JSX.Element {
   const [blockMsg, setBlockMsg] = useState('')
   const [nameInput, setNameInput] = useState('')
 
+  // Daily commitment config drafts
+  const [commitEnabled, setCommitEnabled] = useState(true)
+  const [commitText, setCommitText] = useState('')
+  const [commitTime, setCommitTime] = useState('09:00')
+
   // Challenge modal
   const [challenge, setChallenge] = useState<
     null | {
@@ -262,6 +268,9 @@ export default function App(): JSX.Element {
       setPanicBrowsers(state.config.panic.blockBrowsers)
       setBlockMsg(state.config.blockMessage)
       setNameInput(state.config.userName)
+      setCommitEnabled(state.config.commitment.enabled)
+      setCommitText(state.config.commitment.text)
+      setCommitTime(state.config.commitment.time)
     }
   }, [state, draft])
 
@@ -474,6 +483,16 @@ export default function App(): JSX.Element {
     flash('Name saved.')
   }, [nameInput, refresh, flash])
 
+  const saveCommitment = useCallback(async () => {
+    await window.api.setCommitment({
+      enabled: commitEnabled,
+      text: commitText,
+      time: commitTime
+    })
+    await refresh()
+    flash('Daily commitment saved.')
+  }, [commitEnabled, commitText, commitTime, refresh, flash])
+
   const toggleProtection = useCallback(async () => {
     if (stateRef.current?.config.protectionEnabled) {
       await protectedCall(
@@ -503,6 +522,9 @@ export default function App(): JSX.Element {
 
   // The engine pushes this when it catches a blocked app — show the lockout takeover for real.
   useEffect(() => window.api.onAppBlocked((name) => setBlockedApp(prettyName(name))), [])
+
+  // Main pushes this each morning — refresh so the commitment overlay surfaces promptly.
+  useEffect(() => window.api.onCommitmentDue(() => void refresh()), [refresh])
 
   // ---- Schedule draft editing ----
   function mutateDay(day: number, fn: (ranges: TimeRange[]) => TimeRange[]): void {
@@ -645,6 +667,11 @@ export default function App(): JSX.Element {
     panicMin !== config.panic.minutes ||
     panicMantra !== config.panic.mantra ||
     panicBrowsers !== config.panic.blockBrowsers
+
+  const commitDirty =
+    commitEnabled !== config.commitment.enabled ||
+    commitText !== config.commitment.text ||
+    commitTime !== config.commitment.time
 
   if (!config.onboardingComplete) {
     return <Onboarding onDone={() => void refresh()} />
@@ -1271,6 +1298,62 @@ export default function App(): JSX.Element {
           </div>
         </div>
 
+        {/* Daily commitment */}
+        <div className="card">
+          <div className="setting-row">
+            <div className="setting-row-main">
+              <div className="card-title">Daily commitment</div>
+              <p className="card-help">
+                Each morning Spawncamp pops up and asks you to reaffirm a short commitment —
+                you type it out to start your day with intention.
+              </p>
+            </div>
+            <button
+              className={commitEnabled ? 'toggle on' : 'toggle'}
+              onClick={() => setCommitEnabled((v) => !v)}
+              title={commitEnabled ? 'Turn off' : 'Turn on'}
+              aria-label="Toggle daily commitment"
+            >
+              <span className="toggle-knob" />
+            </button>
+          </div>
+
+          {commitEnabled && (
+            <>
+              <p className="card-help" style={{ marginTop: 12, marginBottom: 6 }}>
+                Your commitment
+              </p>
+              <textarea
+                className="field"
+                maxLength={280}
+                placeholder="I commit to…"
+                value={commitText}
+                onChange={(e) => setCommitText(e.target.value)}
+              />
+              <div className="inline-row">
+                <input
+                  className="field mini"
+                  type="time"
+                  value={commitTime}
+                  onChange={(e) => setCommitTime(e.target.value)}
+                />
+                <span className="inline-label">when it pops up each day</span>
+              </div>
+            </>
+          )}
+
+          <div className="sched-footer" style={{ marginTop: 14 }}>
+            <span />
+            <button
+              className="btn accent"
+              disabled={!commitDirty}
+              onClick={() => void saveCommitment()}
+            >
+              Save commitment
+            </button>
+          </div>
+        </div>
+
         {/* Unlock challenge */}
         <div className="card">
           <div className="card-title">Unlock challenge</div>
@@ -1681,6 +1764,14 @@ export default function App(): JSX.Element {
           until={state.panic.until}
           mantra={config.panic.mantra}
           onDone={() => void refresh()}
+        />
+      )}
+
+      {config.commitment.enabled && state.commitmentDue && !state.panic.active && (
+        <Commitment
+          text={config.commitment.text}
+          userName={config.userName}
+          onCommitted={() => void refresh()}
         />
       )}
 

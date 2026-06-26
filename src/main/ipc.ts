@@ -11,10 +11,12 @@ import {
   type BlockMode,
   type ChallengeConfig,
   type ChallengeType,
+  type CommitmentConfig,
   type PanicConfig,
   type Schedule
 } from './store'
 import { getStatus } from './schedule'
+import { isCommitmentDue, recordCommitment } from './commitment'
 import {
   getKillLog,
   getPanic,
@@ -70,6 +72,8 @@ function clamp(n: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, Math.floor(Number.isFinite(n) ? n : lo)))
 }
 
+const TIME_RE = /^\d{2}:\d{2}$/
+
 export function registerIpc(): void {
   // ---- Read (always open) ----
   ipcMain.handle('get-state', () => {
@@ -83,6 +87,7 @@ export function registerIpc(): void {
       usage: getUsage(),
       panic: getPanic(),
       stats: getStats(),
+      commitmentDue: isCommitmentDue(),
       version: app.getVersion()
     }
   })
@@ -107,17 +112,58 @@ export function registerIpc(): void {
     return getConfig()
   })
 
+  // Daily commitment settings. Ungated — turning the ritual off doesn't weaken blocking.
+  // lastCommittedDate is internal progress state and never changed from Settings.
+  ipcMain.handle('set-commitment', (_e, patch: Partial<CommitmentConfig>) => {
+    const cur = getConfig().commitment
+    const text = typeof patch?.text === 'string' ? patch.text.trim().slice(0, 280) : ''
+    updateConfig({
+      commitment: {
+        enabled: typeof patch?.enabled === 'boolean' ? patch.enabled : cur.enabled,
+        text: text || cur.text,
+        time: typeof patch?.time === 'string' && TIME_RE.test(patch.time) ? patch.time : cur.time,
+        lastCommittedDate: cur.lastCommittedDate
+      }
+    })
+    return getConfig()
+  })
+
+  ipcMain.handle('commit-today', () => {
+    recordCommitment()
+    return getConfig()
+  })
+
   // Applies every onboarding choice at once (one config write, one UAC for any sites).
   ipcMain.handle(
     'complete-onboarding',
     async (
       _e,
-      p: { name?: string; dailyGamingHours?: number; apps?: string[]; mode?: string; sites?: string[] }
+      p: {
+        name?: string
+        dailyGamingHours?: number
+        apps?: string[]
+        mode?: string
+        sites?: string[]
+        commitmentText?: string
+        commitmentTime?: string
+      }
     ): Promise<ProtectedResult> => {
       const cfg = getConfig()
       const name = String(p?.name ?? '').trim().slice(0, 40)
       const dailyGamingHours = Math.max(0, Math.min(24, Number(p?.dailyGamingHours) || 0))
       const mode: BlockMode = p?.mode === 'schedule' ? 'schedule' : 'always'
+
+      const commitText =
+        typeof p?.commitmentText === 'string' ? p.commitmentText.trim().slice(0, 280) : ''
+      const commitment: CommitmentConfig = {
+        enabled: true,
+        text: commitText || cfg.commitment.text,
+        time:
+          typeof p?.commitmentTime === 'string' && TIME_RE.test(p.commitmentTime)
+            ? p.commitmentTime
+            : cfg.commitment.time,
+        lastCommittedDate: cfg.commitment.lastCommittedDate
+      }
 
       const existing = new Set(cfg.blocklist.map((a) => a.name.toLowerCase()))
       const blocklist = [...cfg.blocklist]
@@ -157,6 +203,7 @@ export function registerIpc(): void {
         schedule,
         scheduleEnabled,
         blockedSites,
+        commitment,
         onboardingComplete: true
       })
       return { ok: true, config: getConfig() }

@@ -21,7 +21,13 @@ const api = {
     apps: string[]
     mode: string
     sites: string[]
+    commitmentText?: string
+    commitmentTime?: string
   }) => ipcRenderer.invoke('complete-onboarding', payload),
+
+  setCommitment: (patch: { enabled?: boolean; text?: string; time?: string }) =>
+    ipcRenderer.invoke('set-commitment', patch),
+  commitToday: () => ipcRenderer.invoke('commit-today'),
 
   startPanic: () =>
     ipcRenderer.invoke('start-panic') as Promise<{ active: boolean; until: number }>,
@@ -89,6 +95,15 @@ const api = {
     ipcRenderer.on('app-blocked', listener)
     return () => {
       ipcRenderer.removeListener('app-blocked', listener)
+    }
+  },
+
+  /** Fired each morning when the daily commitment comes due. Returns an unsubscribe fn. */
+  onCommitmentDue: (cb: () => void) => {
+    const listener = (): void => cb()
+    ipcRenderer.on('commitment-due', listener)
+    return () => {
+      ipcRenderer.removeListener('commitment-due', listener)
     }
   }
 }

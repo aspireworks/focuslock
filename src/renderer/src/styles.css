@@ -1524,6 +1524,84 @@ input[type='time'].field {
 }
 
 /* ============================================================
+   Overlay: Daily commitment
+   ============================================================ */
+.commit-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 360;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  background: radial-gradient(circle at 50% 34%, #161a36, #0a0b14 72%);
+  padding: 24px;
+  overflow-y: auto;
+}
+.commit-inner {
+  width: min(560px, 95vw);
+}
+.commit-tile {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 22px;
+  border-radius: 18px;
+  background: var(--accent-grad);
+  color: #fff;
+  box-shadow: 0 10px 34px rgba(123, 123, 255, 0.55);
+}
+.commit-eyebrow {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--accent-text-2);
+  text-transform: uppercase;
+}
+.commit-headline {
+  font-size: 26px;
+  font-weight: 700;
+  color: #fff;
+  margin: 12px 0;
+}
+.commit-body {
+  font-size: 15px;
+  color: #aab0c0;
+  line-height: 1.6;
+  margin: 0 auto 22px;
+  max-width: 460px;
+}
+.commit-statement {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--accent-text);
+  background: rgba(123, 123, 255, 0.08);
+  border: 1px solid rgba(123, 123, 255, 0.28);
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 18px;
+}
+.commit-input {
+  width: 100%;
+  min-height: 90px;
+  resize: vertical;
+  text-align: left;
+}
+.commit-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+.commit-btn {
+  min-width: 220px;
+}
+.commit-foot {
+  margin-top: 18px;
+  font-size: 13px;
+}
+
+/* ============================================================
    Overlay: Onboarding
    ============================================================ */
 .onb-overlay {

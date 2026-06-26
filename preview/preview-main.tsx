@@ -42,6 +42,12 @@ const S: AppState = {
       minutes: 5,
       mantra: "This urge is temporary. What I'm building is not.",
       blockBrowsers: true
+    },
+    commitment: {
+      enabled: true,
+      text: 'I commit to being the hero of my own life and saying no to the distractions that don’t serve me.',
+      time: '09:00',
+      lastCommittedDate: ''
     }
   },
   status: { active: true, nextChange: null },
@@ -53,6 +59,7 @@ const S: AppState = {
   paused: false,
   usage: { date: '2026-06-23', seconds: { 'xboxapp.exe': 22 * 60 } },
   panic: { active: false, until: 0 },
+  commitmentDue: false,
   stats: {
     startDate: '2026-06-11',
     daysSinceStart: 12,
@@ -125,6 +132,15 @@ const mock = {
     S.config.panic = { ...S.config.panic, ...p }
     return ok()
   },
+  setCommitment: async (p: { enabled?: boolean; text?: string; time?: string }) => {
+    S.config.commitment = { ...S.config.commitment, ...p }
+    return S.config
+  },
+  commitToday: async () => {
+    S.config.commitment.lastCommittedDate = '2026-06-25'
+    S.commitmentDue = false
+    return S.config
+  },
   pickFolder: async () => 'C:\\Games\\NewLibrary',
   addFolder: async (path: string, mode = 'always') => {
     S.config.folderBlocks.push({ path, mode: mode as never })
@@ -187,6 +203,17 @@ const mock = {
     ;(window as unknown as { __fireBlock?: (n: string) => void }).__fireBlock = (n) => cb(n)
     return () => {
       ;(window as unknown as { __fireBlock?: (n: string) => void }).__fireBlock = undefined
+    }
+  },
+  // Preview-only: window.__fireCommitment() marks the commitment due so the 2s poll
+  // surfaces the morning overlay. Mirrors __fireBlock.
+  onCommitmentDue: (cb: () => void) => {
+    ;(window as unknown as { __fireCommitment?: () => void }).__fireCommitment = () => {
+      S.commitmentDue = true
+      cb()
+    }
+    return () => {
+      ;(window as unknown as { __fireCommitment?: () => void }).__fireCommitment = undefined
     }
   }
 }
