@@ -501,7 +501,19 @@ bundles them — they get shipped twice.
 
 ---
 
-### 3.5 `[ ]` Legal, docs, and identity (audit C5)
+### 3.5 `[~]` Legal, docs, and identity (audit C5)
+
+**Status:** Files done 2026-07-03, commit `2225720` — LICENSE.md, PRIVACY.md
+(includes the 2.3 "tamper-evident, not tamper-proof" disclosure),
+THIRD-PARTY-NOTICES.md, README.md; all four ship via `extraResources` and open
+from new Privacy/Licenses buttons in the Settings footer; package.json license
+set. **Name check (recorded):** web search found no software product named
+"Spawncamp" — the closest is "SpawnCampGames", a Unity-tutorials creator
+(github.com/spawncampgames), a different name in a different niche; no USPTO
+software filings surfaced. **Open — needs Connor:** (a) a direct USPTO TESS
+search to be thorough, (b) buy the domain (e.g. `spawncamp.app`) *before*
+first release, (c) confirm or change the support email (currently
+`connor.d@mindmaven.com` in ipc.ts).
 
 **Steps:**
 1. **License:** add `LICENSE.md` — proprietary, "All rights reserved" (code stays private; the installer is freeware for now). Set `"license": "SEE LICENSE IN LICENSE.md"` in package.json.
@@ -563,7 +575,7 @@ release notes and check it off):
 
 ---
 
-### 3.8 `[ ]` (Optional, recommended at public launch) Crash visibility decision (audit C-8)
+### 3.8 `[x]` (Optional, recommended at public launch) Crash visibility decision (audit C-8)
 
 **Decision to make:** stay with local logs + "Send feedback" mailto (current,
 zero privacy cost) vs. adding opt-in Sentry crash reporting.
@@ -571,6 +583,14 @@ zero privacy cost) vs. adding opt-in Sentry crash reporting.
 explicit opt-in toggle in Settings, disclosed in PRIVACY.md.
 
 **Done when:** Decision recorded here with rationale.
+
+**Status:** Decision recorded 2026-07-03 (per the recommendation above, Connor
+can override): **stay with local logs + "Send feedback" mailto through beta.**
+Rationale: zero privacy cost keeps PRIVACY.md's "no telemetry, ever" claim
+simple and true; the beta audience is small enough that mailed logs suffice;
+5.8 (renderer error capture into those logs) closes the biggest visibility
+gap without a network component. Revisit at public launch — if added then, it
+must be opt-in and PRIVACY.md updated first.
 
 ---
 
