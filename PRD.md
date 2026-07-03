@@ -300,7 +300,17 @@ in text fields — so the no-menu fallback from step 3 wasn't needed.
 
 ---
 
-### 2.3 `[ ]` Tamper-evident config (audit B4)
+### 2.3 `[x]` Tamper-evident config (audit B4)
+
+**Status:** Done 2026-07-03, commit `7209d6a`. Verified live across four
+launches: legacy unsigned config migrates with no false flag; clean signed
+round-trip is silent; hand-removing a blocked app (stale sig) shows the
+banner, records the lapse (streak 0), and still honors the edit; a doctored
+`panic.json` is treated as expired and flagged. 5 unit tests on the signing
+module. Known/accepted limitation (per spec's legacy rule): stripping the
+`sig` field entirely reverts the file to "legacy" shape and loads unflagged —
+raising that cost is a possible follow-up alongside 2.5. Step 5 (document
+"tamper-evident, not tamper-proof") lands with the 3.5 README/privacy files.
 
 **Problem:** `config.json` / `panic.json` are plain JSON. Editing the file and
 restarting silently clears blocks, panic, and protection.
