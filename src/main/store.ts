@@ -2,6 +2,7 @@ import { app } from 'electron'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { dirname, join } from 'path'
 import { sanitizeSchedule } from './schedule'
+import { normalizeExeName } from './safety'
 
 /** A daily time window in 24h "HH:MM" form. Same-day only (end must be after start). */
 export interface TimeRange {
@@ -148,6 +149,17 @@ function migrate(raw: unknown): Config {
         return null
       })
       .filter((x): x is BlockedApp => x !== null)
+    // One-time cleanup: entries added before name normalization existed ("Steam")
+    // never matched a process. Normalize and drop duplicates (first one wins).
+    const seen = new Set<string>()
+    blocklist = blocklist
+      .map((a): BlockedApp => ({ ...a, name: normalizeExeName(a.name) }))
+      .filter((a) => {
+        const k = a.name.toLowerCase()
+        if (!a.name || seen.has(k)) return false
+        seen.add(k)
+        return true
+      })
   }
 
   let folderBlocks: FolderRule[] = []

@@ -38,7 +38,7 @@ import {
   verifyChallenge
 } from './challenge'
 import { detectGames } from './games'
-import { isDangerousFolder, PROTECTED_PROCESSES } from './safety'
+import { isDangerousFolder, normalizeExeName, PROTECTED_PROCESSES } from './safety'
 import { applyHosts, normalizeDomain } from './websites'
 import { applyAutostart, startWatchdog, stopWatchdog } from './watchdog'
 
@@ -171,13 +171,10 @@ export function registerIpc(): void {
 
       const existing = new Set(cfg.blocklist.map((a) => a.name.toLowerCase()))
       const blocklist = [...cfg.blocklist]
-      for (const exe of Array.isArray(p?.apps) ? p.apps : []) {
-        if (
-          typeof exe === 'string' &&
-          exe &&
-          !existing.has(exe.toLowerCase()) &&
-          !PROTECTED_PROCESSES.has(exe.toLowerCase())
-        ) {
+      for (const raw of Array.isArray(p?.apps) ? p.apps : []) {
+        const exe = typeof raw === 'string' ? normalizeExeName(raw) : ''
+        if (exe && !existing.has(exe.toLowerCase()) && !PROTECTED_PROCESSES.has(exe.toLowerCase())) {
+          existing.add(exe.toLowerCase())
           blocklist.push({ name: exe, mode })
         }
       }
@@ -295,7 +292,7 @@ export function registerIpc(): void {
     'add-app',
     (_e, name: string, mode?: BlockMode, dailyLimitMinutes?: number): ProtectedResult => {
       const cfg = getConfig()
-      const n = String(name).trim()
+      const n = normalizeExeName(String(name))
       if (PROTECTED_PROCESSES.has(n.toLowerCase())) {
         return { ok: false, error: `${n} is a Windows system process — blocking it would break your PC.` }
       }

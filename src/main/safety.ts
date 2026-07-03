@@ -26,6 +26,18 @@ export const PROTECTED_PROCESSES: Set<string> = new Set([
   'electron.exe'
 ])
 
+/**
+ * What a user types ("Steam", '"steam.exe"', 'STEAM.EXE') → the executable
+ * name the engine can actually match ("Steam.exe" etc. — matching is
+ * case-insensitive, so casing is preserved for display).
+ */
+export function normalizeExeName(name: string): string {
+  let n = String(name).trim()
+  n = n.replace(/^["']+|["']+$/g, '').trim() // surrounding quotes
+  if (n && !/\.exe$/i.test(n)) n += '.exe'
+  return n
+}
+
 export interface SafetyEnv {
   /** e.g. C:\Windows */
   windir: string

@@ -1,6 +1,11 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { isDangerousFolder, PROTECTED_PROCESSES, type SafetyEnv } from '../src/main/safety.ts'
+import {
+  isDangerousFolder,
+  normalizeExeName,
+  PROTECTED_PROCESSES,
+  type SafetyEnv
+} from '../src/main/safety.ts'
 
 // A fixed fake machine so results don't depend on where the tests run.
 const env: SafetyEnv = {
@@ -47,6 +52,15 @@ test("Spawncamp's own folder and its ancestors are refused", () => {
 test('ordinary game folders are allowed', () => {
   assert.equal(isDangerousFolder('D:\\Games', env), null)
   assert.equal(isDangerousFolder('D:\\SteamLibrary\\steamapps\\common', env), null)
+})
+
+test('normalizeExeName makes typed names matchable', () => {
+  assert.equal(normalizeExeName('steam'), 'steam.exe')
+  assert.equal(normalizeExeName('steam.exe'), 'steam.exe')
+  assert.equal(normalizeExeName('STEAM.EXE'), 'STEAM.EXE') // already .exe — casing kept
+  assert.equal(normalizeExeName('"steam.exe"'), 'steam.exe')
+  assert.equal(normalizeExeName("  'Steam'  "), 'Steam.exe')
+  assert.equal(normalizeExeName('   '), '')
 })
 
 test('protected process list covers the critical names', () => {
