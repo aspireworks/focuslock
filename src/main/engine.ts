@@ -5,6 +5,7 @@ import { existsSync, readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { getConfig } from './store'
 import { getStatus } from './schedule'
+import { PROTECTED_PROCESSES } from './safety'
 import { flushStats, initStats, recordBlock, recordRuntime } from './stats'
 
 const execAsync = promisify(exec)
@@ -302,8 +303,8 @@ async function listProcesses(): Promise<RunningProcess[]> {
 /** Unique blockable executable names currently running (for the "add from running" picker). */
 export async function listRunningApps(): Promise<string[]> {
   const procs = await listProcesses()
-  const names = Array.from(new Set(procs.map((p) => p.name))).filter((n) =>
-    n.toLowerCase().endsWith('.exe')
+  const names = Array.from(new Set(procs.map((p) => p.name))).filter(
+    (n) => n.toLowerCase().endsWith('.exe') && !PROTECTED_PROCESSES.has(n.toLowerCase())
   )
   names.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
   return names
@@ -332,6 +333,7 @@ async function listProcessesWithPaths(): Promise<{ pid: number; path: string }[]
 }
 
 async function killByPid(pid: number): Promise<void> {
+  if (pid === process.pid) return // never kill ourselves, whatever a rule says
   try {
     await execAsync(`taskkill /F /T /PID ${pid}`, { windowsHide: true })
   } catch {
@@ -364,6 +366,8 @@ async function tick(): Promise<void> {
 
   for (const appCfg of cfg.blocklist) {
     const key = appCfg.name.toLowerCase()
+    // Defense in depth — such names are rejected at add time, but old configs may have them.
+    if (PROTECTED_PROCESSES.has(key)) continue
     const pids = running.get(key)
     let shouldKill = false
 
@@ -438,12 +442,16 @@ async function tick(): Promise<void> {
       .filter((f) => panicActive || f.mode === 'always' || (f.mode === 'schedule' && schedActive))
       .map((f) => f.path.replace(/[\\/]+$/, '').toLowerCase())
     if (activeFolders.length > 0) {
+      const windir = (process.env.WINDIR || 'C:\\Windows').toLowerCase()
       const withPaths = await listProcessesWithPaths()
       for (const p of withPaths) {
         const lp = p.path.toLowerCase()
+        const exeKey = (lp.split(/[\\/]/).pop() ?? '').trim()
+        // Safety net: never let a folder rule take out Windows or Spawncamp itself.
+        if (PROTECTED_PROCESSES.has(exeKey)) continue
+        if (lp.startsWith(windir + '\\')) continue
         // Folder-caught apps honor exemptions by exe name too (matches the lockout's
         // unlock flow, which only knows the exe name). Panic still kills everything.
-        const exeKey = (lp.split(/[\\/]/).pop() ?? '').trim()
         if (!panicActive && exeKey && isExempt(exeKey)) continue
         if (activeFolders.some((f) => lp.startsWith(f + '\\'))) {
           await killByPid(p.pid)

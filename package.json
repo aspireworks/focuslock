@@ -12,6 +12,7 @@
     "preview": "electron-vite preview",
     "make-icon": "node scripts/make-logo-icons.cjs",
     "typecheck": "tsc --noEmit",
+    "test": "node --test \"tests/**/*.test.ts\"",
     "dist": "node scripts/make-logo-icons.cjs && electron-vite build && electron-builder --win"
   },
   "dependencies": {

@@ -325,7 +325,11 @@ export default function App(): JSX.Element {
     async (name: string, mode: BlockMode = 'always') => {
       const n = name.trim()
       if (!n) return
-      await window.api.addApp(n, mode)
+      const res = (await window.api.addApp(n, mode)) as { ok?: boolean; error?: string }
+      if (res?.ok === false) {
+        flash(res.error || `Can’t block ${n}.`)
+        return
+      }
       setNewApp('')
       await refresh()
       await scanGames()
@@ -376,7 +380,11 @@ export default function App(): JSX.Element {
   const addFolder = useCallback(async () => {
     const path = await window.api.pickFolder()
     if (!path) return
-    await window.api.addFolder(path, 'always')
+    const res = (await window.api.addFolder(path, 'always')) as { ok?: boolean; error?: string }
+    if (res?.ok === false) {
+      flash(res.error || 'Can’t block that folder.')
+      return
+    }
     await refresh()
     flash('Folder blocked.')
   }, [refresh, flash])

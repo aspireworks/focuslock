@@ -38,6 +38,7 @@ import {
   verifyChallenge
 } from './challenge'
 import { detectGames } from './games'
+import { isDangerousFolder, PROTECTED_PROCESSES } from './safety'
 import { applyHosts, normalizeDomain } from './websites'
 import { applyAutostart, startWatchdog, stopWatchdog } from './watchdog'
 
@@ -171,7 +172,12 @@ export function registerIpc(): void {
       const existing = new Set(cfg.blocklist.map((a) => a.name.toLowerCase()))
       const blocklist = [...cfg.blocklist]
       for (const exe of Array.isArray(p?.apps) ? p.apps : []) {
-        if (typeof exe === 'string' && exe && !existing.has(exe.toLowerCase())) {
+        if (
+          typeof exe === 'string' &&
+          exe &&
+          !existing.has(exe.toLowerCase()) &&
+          !PROTECTED_PROCESSES.has(exe.toLowerCase())
+        ) {
           blocklist.push({ name: exe, mode })
         }
       }
@@ -285,27 +291,35 @@ export function registerIpc(): void {
   })
 
   // ---- Adding / strengthening is always allowed (no challenge) ----
-  ipcMain.handle('add-app', (_e, name: string, mode?: BlockMode, dailyLimitMinutes?: number) => {
-    const cfg = getConfig()
-    const n = String(name).trim()
-    if (n && !cfg.blocklist.some((a) => a.name.toLowerCase() === n.toLowerCase())) {
-      const m = coerceMode(mode)
-      const entry: BlockedApp = { name: n, mode: m }
-      if (m === 'budget') entry.dailyLimitMinutes = Number(dailyLimitMinutes) || 60
-      updateConfig({ blocklist: [...cfg.blocklist, entry] })
+  ipcMain.handle(
+    'add-app',
+    (_e, name: string, mode?: BlockMode, dailyLimitMinutes?: number): ProtectedResult => {
+      const cfg = getConfig()
+      const n = String(name).trim()
+      if (PROTECTED_PROCESSES.has(n.toLowerCase())) {
+        return { ok: false, error: `${n} is a Windows system process — blocking it would break your PC.` }
+      }
+      if (n && !cfg.blocklist.some((a) => a.name.toLowerCase() === n.toLowerCase())) {
+        const m = coerceMode(mode)
+        const entry: BlockedApp = { name: n, mode: m }
+        if (m === 'budget') entry.dailyLimitMinutes = Number(dailyLimitMinutes) || 60
+        updateConfig({ blocklist: [...cfg.blocklist, entry] })
+      }
+      return { ok: true, config: getConfig() }
     }
-    return getConfig()
-  })
+  )
 
-  ipcMain.handle('add-folder', (_e, path: string, mode?: 'always' | 'schedule') => {
+  ipcMain.handle('add-folder', (_e, path: string, mode?: 'always' | 'schedule'): ProtectedResult => {
     const cfg = getConfig()
     const p = String(path).trim()
+    const danger = p ? isDangerousFolder(p) : null
+    if (danger) return { ok: false, error: danger }
     if (p && !cfg.folderBlocks.some((f) => f.path.toLowerCase() === p.toLowerCase())) {
       updateConfig({
         folderBlocks: [...cfg.folderBlocks, { path: p, mode: mode === 'schedule' ? 'schedule' : 'always' }]
       })
     }
-    return getConfig()
+    return { ok: true, config: getConfig() }
   })
 
   // Adding a blocked site triggers one elevated (UAC) hosts write.
