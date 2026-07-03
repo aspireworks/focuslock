@@ -84,7 +84,16 @@ block critical system processes by name.
 
 ---
 
-### 1.3 `[ ]` Verify hosts writes actually applied; harden the elevated script (audit A3 + D-quoting)
+### 1.3 `[x]` Verify hosts writes actually applied; harden the elevated script (audit A3 + D-quoting)
+
+**Status:** Done 2026-07-03, commit `b9fb3dd`. Pure logic moved to
+`src/main/hosts-logic.ts` (starts 3.6's restructuring early);
+`scripts/test-hosts.cjs` ported into `tests/hosts.test.ts` and deleted —
+14 hosts tests incl. the verification parser (UAC-declined, missing-domain,
+lookalike-line-outside-block, and clear cases) all pass. **Needs one manual QA
+step (do this before relying on it):** add a site, decline the UAC prompt, and
+confirm the error toast appears and the site is NOT saved — the accept path
+should behave as before. Also on the 3.7 checklist.
 
 **Problem:** If the user declines the UAC prompt — or `Copy-Item` fails — the
 elevated PowerShell can still exit 0, so `applyHosts` reports success and the
