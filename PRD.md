@@ -112,7 +112,16 @@ PowerShell strings.
 
 ---
 
-### 1.4 `[ ]` Validate schedules everywhere; make the engine unbrickable (audit A4)
+### 1.4 `[x]` Validate schedules everywhere; make the engine unbrickable (audit A4)
+
+**Status:** Done 2026-07-03, commit `8c10291`. Verified live: seeded
+`config.json` with `"schedule": {"1": "garbage", "2": 42, ...}`, launched the
+app — UI loads, notepad.exe (Always) still killed, and the persisted config
+comes back sanitized. 7 new unit tests. Deviation: instead of try/catching the
+two call sites, `getStatus` itself never throws (degrades to inactive, logs
+once) — this also protects `isBlockingNow`, which the spec's wording missed.
+`migrate()` round-trip tests still land with the 3.6 restructuring (store.ts
+imports electron, so it isn't directly unit-testable yet).
 
 **Problem:** `migrate()` casts `r.schedule as Schedule` unvalidated, and
 `set-schedule` accepts any object. A malformed schedule makes `getStatus` throw
