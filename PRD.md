@@ -137,7 +137,15 @@ on every tick — blocking silently stops and the UI hangs on "Loading Spawncamp
 
 ---
 
-### 1.5 `[ ]` Normalize app names — "Steam" must block steam.exe (audit A5)
+### 1.5 `[x]` Normalize app names — "Steam" must block steam.exe (audit A5)
+
+**Status:** Done 2026-07-03, commit `64a746c`. Verified live: a legacy config
+with `Steam` + `"steam.exe"` + string entry `discord` migrates to
+`Steam.exe` + `discord.exe` (first of the collision wins, mode preserved);
+typing bare `notepad` in the Apps tab saves `notepad.exe` and the launched
+process is killed. Unit test covers `steam`, `steam.exe`, `STEAM.EXE`,
+`"steam.exe"`, quoted/padded, and empty input. Note: normalization runs
+*before* the protected-process check, so typing `explorer` is also refused.
 
 **Problem:** The engine matches exact process names. A user who types `Steam`
 gets a success toast and zero enforcement, forever.
