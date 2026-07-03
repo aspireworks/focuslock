@@ -109,6 +109,8 @@ export interface AppState {
   stats: StatsView
   /** True when today's commitment is due and not yet done (drives the morning overlay). */
   commitmentDue: boolean
+  /** True when config.json/panic.json failed its signature check at load. */
+  tamperNotice: boolean
   version: string
 }
 

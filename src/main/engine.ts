@@ -6,6 +6,7 @@ import { join } from 'path'
 import { getConfig } from './store'
 import { getStatus } from './schedule'
 import { PROTECTED_PROCESSES } from './safety'
+import { flagTamper, signValue, verifySigned } from './integrity'
 import { flushStats, initStats, recordBlock, recordRuntime } from './stats'
 
 const execAsync = promisify(exec)
@@ -235,7 +236,19 @@ function initPanic(): void {
     if (existsSync(panicPath)) {
       let text = readFileSync(panicPath, 'utf-8')
       if (text.charCodeAt(0) === 0xfeff) text = text.slice(1)
-      panicUntil = Number(JSON.parse(text).until) || 0
+      const raw = JSON.parse(text) as { until?: unknown; sig?: unknown }
+      if (raw && typeof raw === 'object' && 'sig' in raw) {
+        // Tampering can't shorten a lockdown legitimately (panic only extends), so
+        // an invalid sig means the file was doctored: treat as expired but flag it.
+        if (verifySigned(raw.until, raw.sig)) {
+          panicUntil = Number(raw.until) || 0
+        } else {
+          flagTamper('panic.json')
+          panicUntil = 0
+        }
+      } else {
+        panicUntil = Number(raw?.until) || 0 // legacy unsigned — valid once
+      }
     }
   } catch (e) {
     console.error('[engine] failed to read panic state:', e)
@@ -256,7 +269,11 @@ export function startPanic(minutes: number): { active: boolean; until: number } 
   // Only ever extend — re-triggering panic can't be used to shorten an active lockdown.
   panicUntil = Math.max(panicUntil, Date.now() + m * 60_000)
   try {
-    writeFileSync(panicPath, JSON.stringify({ until: panicUntil }), 'utf-8')
+    writeFileSync(
+      panicPath,
+      JSON.stringify({ until: panicUntil, sig: signValue(panicUntil) }),
+      'utf-8'
+    )
   } catch (e) {
     console.error('[engine] failed to persist panic:', e)
   }

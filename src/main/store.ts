@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { dirname, join } from 'path'
 import { sanitizeSchedule } from './schedule'
 import { normalizeExeName } from './safety'
+import { flagTamper, signValue, verifySigned } from './integrity'
 
 /** A daily time window in 24h "HH:MM" form. Same-day only (end must be after start). */
 export interface TimeRange {
@@ -243,7 +244,15 @@ function load(): Config {
       // Strip a UTF-8 BOM if some editor added one — JSON.parse chokes on it.
       let text = readFileSync(configPath, 'utf-8')
       if (text.charCodeAt(0) === 0xfeff) text = text.slice(1)
-      return migrate(JSON.parse(text))
+      const raw = JSON.parse(text) as Record<string, unknown> | null
+      if (raw && typeof raw === 'object' && ('sig' in raw || 'config' in raw)) {
+        // Signed shape { config, sig }. Invalid sig: still honor the file (user
+        // agency), but flag it — the tamper costs a lapse and shows a banner.
+        if (!verifySigned(raw.config, raw.sig)) flagTamper('config.json')
+        return migrate(raw.config)
+      }
+      // Legacy unsigned shape — valid once; it gets signed on the next persist.
+      return migrate(raw)
     }
   } catch (e) {
     console.error('[store] failed to read config, using defaults:', e)
@@ -254,7 +263,11 @@ function load(): Config {
 function persist(): void {
   try {
     mkdirSync(dirname(configPath), { recursive: true })
-    writeFileSync(configPath, JSON.stringify(cache, null, 2), 'utf-8')
+    writeFileSync(
+      configPath,
+      JSON.stringify({ config: cache, sig: signValue(cache) }, null, 2),
+      'utf-8'
+    )
   } catch (e) {
     console.error('[store] failed to write config:', e)
   }

@@ -196,6 +196,19 @@ body {
   border: none;
   color: #fff;
 }
+.tamper-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 18px 26px 0;
+  padding: 12px 16px;
+  background: rgba(245, 176, 66, 0.09);
+  border: 1px solid rgba(245, 176, 66, 0.35);
+  border-radius: 10px;
+  color: var(--amber);
+  font-size: 13px;
+}
 .pause-wrap {
   position: relative;
 }

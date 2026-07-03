@@ -40,6 +40,7 @@ import {
   verifyChallenge
 } from './challenge'
 import { detectGames } from './games'
+import { isTampered } from './integrity'
 import { isDangerousFolder, normalizeExeName, PROTECTED_PROCESSES } from './safety'
 import { applyHosts, normalizeDomain } from './websites'
 import { applyAutostart, startWatchdog, stopWatchdog } from './watchdog'
@@ -95,6 +96,7 @@ export function registerIpc(): void {
       exemptions: getExemptions(),
       stats: getStats(),
       commitmentDue: isCommitmentDue(),
+      tamperNotice: isTampered(),
       version: app.getVersion()
     }
   })

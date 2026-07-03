@@ -3,6 +3,8 @@ import { join } from 'path'
 import trayIcon from '../../resources/tray.png?asset'
 import { getConfig, initStore } from './store'
 import { isBlockingNow, isPanicActive, setOnAppBlocked, startEngine, stopEngine } from './engine'
+import { isTampered } from './integrity'
+import { recordLapse } from './stats'
 import { startCommitmentScheduler } from './commitment'
 import { registerIpc } from './ipc'
 import { applyAutostart, startGuardianLoop, startWatchdog } from './watchdog'
@@ -41,6 +43,9 @@ if (isGuardian) {
       createWindow()
       createTray()
       startEngine()
+      // An out-of-band edit to config.json/panic.json costs the day's streak —
+      // recorded here because stats are only initialized inside startEngine().
+      if (isTampered()) recordLapse()
       // When a blocked app is caught, bring the window forward and show the lockout takeover.
       setOnAppBlocked((name) => {
         if (!mainWindow || mainWindow.isDestroyed()) return

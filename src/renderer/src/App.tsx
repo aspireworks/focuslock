@@ -175,6 +175,7 @@ export default function App(): JSX.Element {
   // Overlay/preview UI flags
   const [lockoutPreview, setLockoutPreview] = useState(false)
   const [showPauseMenu, setShowPauseMenu] = useState(false)
+  const [tamperDismissed, setTamperDismissed] = useState(false)
   // The caught app: raw exe name (what the engine matches) + pretty name (what we show).
   const [blockedApp, setBlockedApp] = useState<{ raw: string; pretty: string } | null>(null)
   const [replayOnb, setReplayOnb] = useState(false)
@@ -1770,6 +1771,16 @@ export default function App(): JSX.Element {
         </header>
 
         <div className="content">
+          {state.tamperNotice && !tamperDismissed && (
+            <div className="tamper-banner">
+              <span>
+                Your settings file was changed outside Spawncamp. Today’s streak was reset.
+              </span>
+              <button className="btn ghost sm" onClick={() => setTamperDismissed(true)}>
+                Dismiss
+              </button>
+            </div>
+          )}
           <div className="section" key={activeTab}>
             {renderSection()}
           </div>
