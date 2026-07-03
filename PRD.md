@@ -515,7 +515,19 @@ bundles them — they get shipped twice.
 
 ---
 
-### 3.6 `[ ]` Tests, linting, CI (audit C6)
+### 3.6 `[~]` Tests, linting, CI (audit C6)
+
+**Status:** Code done 2026-07-03, commit `142b840` — awaiting one green CI run
+on GitHub to check the box. 51 tests across 7 suites (`npm test`, node:test
+running TS directly on Node 22); migrate()/streak/challenge suites added per
+step 2 (config + streak logic extracted to pure modules first). ESLint flat
+config (typescript-eslint + react-hooks) with `npm run lint` clean — note:
+react-hooks v7's new `set-state-in-effect`/`refs` rules are disabled with a
+comment pointing at the 5.1 refactor; expect to re-enable them there.
+`scripts/test-hosts.cjs` was already ported/deleted in 1.3. CI workflow at
+`.github/workflows/ci.yml` (typecheck/lint/test/build on push+PR,
+installer on v* tags). Bonus: tests caught that "25:99" passed HH:MM
+validation — fixed everywhere via a strict `isValidTime`.
 
 **Steps:**
 1. Restructure for testability: extract pure logic into importable modules where needed (`normalizeDomain`/`buildHosts` already are; `sanitizeSchedule` (1.4), `normalizeExeName` (1.5), `isDangerousFolder` (1.2), streak math in `stats.ts` — refactor `computeStreak`/`isLapseDay` to accept injected state + "today" so tests don't depend on the wall clock).
