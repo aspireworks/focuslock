@@ -434,6 +434,16 @@ export default function App(): JSX.Element {
     [protectedCall]
   )
 
+  const retryPendingSites = useCallback(async () => {
+    const res = await window.api.retryPendingSites()
+    if (res?.ok === false) {
+      flash(res.error || 'Still not allowed — try again.')
+      return
+    }
+    await refresh()
+    flash('Website blocks applied.')
+  }, [refresh, flash])
+
   const togglePause = useCallback(async () => {
     const cur = stateRef.current?.paused ?? false
     await window.api.setPaused(!cur)
@@ -1004,8 +1014,28 @@ export default function App(): JSX.Element {
 
   // ---------------------------------------------------------- Websites
   function renderSites(): JSX.Element {
+    const pending = config.pendingSites ?? []
     return (
       <div className="page page-sites">
+        {pending.length > 0 && (
+          <div className="card">
+            <div className="setting-row">
+              <div className="setting-row-main">
+                <div className="card-title">
+                  ⚠️ {pending.length} {pending.length === 1 ? 'site' : 'sites'} from setup{' '}
+                  {pending.length === 1 ? 'isn’t' : 'aren’t'} applied yet
+                </div>
+                <p className="card-help" style={{ margin: 0 }}>
+                  Windows didn’t allow the change during setup ({pending.join(', ')}). Retrying
+                  shows one admin prompt.
+                </p>
+              </div>
+              <button className="btn accent" onClick={() => void retryPendingSites()}>
+                Retry now
+              </button>
+            </div>
+          </div>
+        )}
         <div className="card add-card">
           <div className="card-title">Block a website</div>
           <p className="card-help">

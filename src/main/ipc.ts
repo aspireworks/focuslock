@@ -151,7 +151,7 @@ export function registerIpc(): void {
         commitmentText?: string
         commitmentTime?: string
       }
-    ): Promise<ProtectedResult> => {
+    ): Promise<ProtectedResult & { siteError?: string; pendingSites?: string[] }> => {
       const cfg = getConfig()
       const name = String(p?.name ?? '').trim().slice(0, 40)
       const dailyGamingHours = Math.max(0, Math.min(24, Number(p?.dailyGamingHours) || 0))
@@ -193,13 +193,23 @@ export function registerIpc(): void {
       }
 
       let blockedSites = cfg.blockedSites
+      let pendingSites = cfg.pendingSites
+      let siteError: string | undefined
       const sites = (Array.isArray(p?.sites) ? p.sites : [])
         .map((s) => normalizeDomain(String(s)))
         .filter((s): s is string => !!s)
       if (sites.length > 0) {
         const merged = Array.from(new Set([...cfg.blockedSites, ...sites]))
         const res = await applyHosts(merged)
-        if (res.ok) blockedSites = merged
+        if (res.ok) {
+          blockedSites = merged
+          pendingSites = []
+        } else {
+          // Don't fail onboarding over a declined UAC prompt — but don't pretend
+          // either. Stash the sites so the Websites tab can offer a retry.
+          siteError = res.error || 'The website blocks could not be applied.'
+          pendingSites = Array.from(new Set([...pendingSites, ...sites]))
+        }
       }
 
       updateConfig({
@@ -209,12 +219,28 @@ export function registerIpc(): void {
         schedule,
         scheduleEnabled,
         blockedSites,
+        pendingSites,
         commitment,
         onboardingComplete: true
       })
-      return { ok: true, config: getConfig() }
+      return { ok: true, siteError, pendingSites, config: getConfig() }
     }
   )
+
+  // Retry the onboarding sites that never made it into the hosts file (one merged
+  // write, one UAC prompt). Adding sites only strengthens, so this is un-gated.
+  ipcMain.handle('retry-pending-sites', async (): Promise<ProtectedResult> => {
+    const cfg = getConfig()
+    if (cfg.pendingSites.length === 0) return { ok: true, config: cfg }
+    const pending = cfg.pendingSites
+      .map((s) => normalizeDomain(String(s)))
+      .filter((s): s is string => !!s)
+    const merged = Array.from(new Set([...cfg.blockedSites, ...pending]))
+    const res = await applyHosts(merged)
+    if (!res.ok) return { ok: false, error: res.error }
+    updateConfig({ blockedSites: merged, pendingSites: [] })
+    return { ok: true, config: getConfig() }
+  })
 
   // Panic mode — anyone can trigger it (it only adds restriction); it can't be lifted early.
   ipcMain.handle('start-panic', () => startPanic(getConfig().panic.minutes))

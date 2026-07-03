@@ -23,7 +23,14 @@ const api = {
     sites: string[]
     commitmentText?: string
     commitmentTime?: string
-  }) => ipcRenderer.invoke('complete-onboarding', payload),
+  }) =>
+    ipcRenderer.invoke('complete-onboarding', payload) as Promise<{
+      ok: boolean
+      siteError?: string
+      pendingSites?: string[]
+    }>,
+  retryPendingSites: () =>
+    ipcRenderer.invoke('retry-pending-sites') as Promise<{ ok: boolean; error?: string }>,
 
   setCommitment: (patch: { enabled?: boolean; text?: string; time?: string }) =>
     ipcRenderer.invoke('set-commitment', patch),

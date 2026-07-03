@@ -51,6 +51,8 @@ export interface Config {
   blocklist: BlockedApp[]
   folderBlocks: FolderRule[]
   blockedSites: string[]
+  /** Onboarding sites whose hosts write failed — retryable from the Websites tab. */
+  pendingSites: string[]
   protectionEnabled: boolean
   blockMessage: string
   userName: string

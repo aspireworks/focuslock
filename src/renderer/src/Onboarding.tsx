@@ -39,6 +39,8 @@ export function Onboarding({ onDone }: Props): JSX.Element {
   const [commitText, setCommitText] = useState(DEFAULT_COMMITMENT)
   const [commitTime, setCommitTime] = useState('09:00')
   const [busy, setBusy] = useState(false)
+  // Set when setup finished but the website blocks didn't apply (UAC declined).
+  const [siteWarn, setSiteWarn] = useState(false)
 
   useEffect(() => {
     if (step === 3 && games === null) {
@@ -71,7 +73,7 @@ export function Onboarding({ onDone }: Props): JSX.Element {
 
   async function finish(): Promise<void> {
     setBusy(true)
-    await window.api.completeOnboarding({
+    const res = await window.api.completeOnboarding({
       name: name.trim(),
       dailyGamingHours: hoursSet ? gamingHours : 0,
       apps: [...apps],
@@ -80,6 +82,11 @@ export function Onboarding({ onDone }: Props): JSX.Element {
       commitmentText: commitText.trim(),
       commitmentTime: commitTime
     })
+    if (res?.siteError) {
+      setBusy(false)
+      setSiteWarn(true)
+      return
+    }
     onDone()
   }
 
@@ -368,7 +375,24 @@ export function Onboarding({ onDone }: Props): JSX.Element {
           </div>
         )}
 
-        {step === 7 && (
+        {step === 7 && siteWarn && (
+          <div className="onb-step">
+            <div className="onb-emoji">⚠️</div>
+            <h2>Almost — one thing needs a retry.</h2>
+            <p>
+              Your app blocks are active, but Windows didn’t allow the website blocks — the admin
+              prompt may have been declined. You can retry anytime from the{' '}
+              <strong>Websites</strong> tab.
+            </p>
+            <div className="onb-actions">
+              <button className="btn accent" onClick={onDone}>
+                Got it
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === 7 && !siteWarn && (
           <div className="onb-step">
             <div className="onb-emoji">💪</div>
             <h2>That’s it, {who}. You’re set.</h2>

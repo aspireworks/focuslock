@@ -71,6 +71,8 @@ export interface Config {
   folderBlocks: FolderRule[]
   /** Domains blocked via the hosts file (always-on while listed). */
   blockedSites: string[]
+  /** Sites requested during onboarding whose hosts write failed (UAC declined) — retryable from the Websites tab. */
+  pendingSites: string[]
   /** Run-on-boot + self-relaunch watchdog. Turning off is challenge-gated. */
   protectionEnabled: boolean
   /** Shown in the "you're blocked" notification when an app is killed. */
@@ -98,6 +100,7 @@ const DEFAULT_CONFIG: Config = {
   blocklist: [],
   folderBlocks: [],
   blockedSites: [],
+  pendingSites: [],
   protectionEnabled: false,
   blockMessage: 'Back to what matters. You’ve got this.',
   userName: '',
@@ -179,10 +182,15 @@ function migrate(raw: unknown): Config {
     ? r.blockedSites.filter((s): s is string => typeof s === 'string')
     : []
 
+  const pendingSites = Array.isArray(r.pendingSites)
+    ? r.pendingSites.filter((s): s is string => typeof s === 'string')
+    : []
+
   return {
     blocklist,
     folderBlocks,
     blockedSites,
+    pendingSites,
     protectionEnabled: r.protectionEnabled === true,
     blockMessage: typeof r.blockMessage === 'string' ? r.blockMessage : base.blockMessage,
     userName: typeof r.userName === 'string' ? r.userName : '',
