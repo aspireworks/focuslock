@@ -1,6 +1,7 @@
 import { app } from 'electron'
 import { existsSync, readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
+import { computeCurrentStreak, dayKey } from './streak'
 
 interface Stats {
   startDate: string
@@ -29,15 +30,6 @@ export interface StatsView {
   weekRuntime: { name: string; seconds: number }[]
 }
 
-/**
- * A blocked app running under this many seconds in a day is noise (launched then
- * killed, an incidental background tick) — not a real gaming session. At or above
- * it, the day counts as a lapse and breaks the streak.
- */
-const RUNTIME_LAPSE_THRESHOLD_SEC = 60
-
-const pad = (n: number): string => String(n).padStart(2, '0')
-const dayKey = (d: Date): string => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 const today = (): string => dayKey(new Date())
 
 let statsPath = ''
@@ -133,37 +125,15 @@ export function recordLapse(): void {
   persist()
 }
 
-/** Total allowed-runtime (seconds) across all blocked apps on a given day. */
-function dayRuntimeSeconds(dayK: string): number {
-  const rt = stats.runtime[dayK]
-  if (!rt) return 0
-  let sum = 0
-  for (const s of Object.values(rt)) sum += s
-  return sum
-}
-
-/** A day breaks the streak if protection was paused/disabled OR a blocked game actually ran. */
-function isLapseDay(dayK: string): boolean {
-  return stats.lapseDays[dayK] === 1 || dayRuntimeSeconds(dayK) >= RUNTIME_LAPSE_THRESHOLD_SEC
-}
-
 /**
- * Current streak = consecutive clean days ending today; best = the all-time max,
- * persisted so it survives the 90-day pruning of the day buckets. (A clean run
- * longer than the retention window can under-count `current` if a lapse just before
- * the window was pruned — an acceptable edge for a 90+ day streak.)
+ * Current streak = consecutive clean days ending today (pure math in streak.ts);
+ * best = the all-time max, persisted so it survives the 90-day pruning of the day
+ * buckets. (A clean run longer than the retention window can under-count `current`
+ * if a lapse just before the window was pruned — an acceptable edge for a 90+ day
+ * streak.)
  */
 function computeStreak(): { current: number; best: number } {
-  const start = stats.startDate
-  let current = 0
-  const cursor = new Date()
-  for (;;) {
-    const k = dayKey(cursor)
-    if (k < start) break // never count days before the user started
-    if (isLapseDay(k)) break
-    current++
-    cursor.setDate(cursor.getDate() - 1)
-  }
+  const current = computeCurrentStreak(stats, new Date())
   if (current > stats.bestStreak) {
     stats.bestStreak = current
     persist()

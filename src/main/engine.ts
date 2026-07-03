@@ -56,7 +56,7 @@ export function isPaused(): boolean {
 // Lowercased exe name -> expiry epoch ms. Persisted so an app crash/restart
 // doesn't cut a granted break short. Panic ignores this map entirely.
 let exemptionsPath = ''
-let exemptions: Record<string, number> = {}
+const exemptions: Record<string, number> = {}
 
 function initExemptions(): void {
   exemptionsPath = join(app.getPath('userData'), 'exemptions.json')

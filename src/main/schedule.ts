@@ -1,4 +1,4 @@
-import type { Schedule, TimeRange } from './store'
+import type { Schedule, TimeRange } from './config-logic'
 
 function toMinutes(hhmm: string): number {
   const [h, m] = hhmm.split(':').map(Number)
@@ -7,7 +7,8 @@ function toMinutes(hhmm: string): number {
 
 const TIME_RE = /^\d{2}:\d{2}$/
 
-function isValidTime(t: unknown): t is string {
+/** Strict "HH:MM" check — digits AND real clock ranges (rejects "25:99"). */
+export function isValidTime(t: unknown): t is string {
   if (typeof t !== 'string' || !TIME_RE.test(t)) return false
   const [h, m] = t.split(':').map(Number)
   return h >= 0 && h <= 23 && m >= 0 && m <= 59

@@ -15,7 +15,7 @@ import {
   type PanicConfig,
   type Schedule
 } from './store'
-import { getStatus, sanitizeSchedule } from './schedule'
+import { getStatus, isValidTime, sanitizeSchedule } from './schedule'
 import { isCommitmentDue, recordCommitment } from './commitment'
 import {
   exemptApp,
@@ -85,8 +85,6 @@ function clamp(n: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, Math.floor(Number.isFinite(n) ? n : lo)))
 }
 
-const TIME_RE = /^\d{2}:\d{2}$/
-
 export function registerIpc(): void {
   // ---- Read (always open) ----
   ipcMain.handle('get-state', () => {
@@ -137,7 +135,7 @@ export function registerIpc(): void {
       commitment: {
         enabled: typeof patch?.enabled === 'boolean' ? patch.enabled : cur.enabled,
         text: text || cur.text,
-        time: typeof patch?.time === 'string' && TIME_RE.test(patch.time) ? patch.time : cur.time,
+        time: isValidTime(patch?.time) ? patch.time : cur.time,
         lastCommittedDate: cur.lastCommittedDate
       }
     })
@@ -174,10 +172,7 @@ export function registerIpc(): void {
       const commitment: CommitmentConfig = {
         enabled: true,
         text: commitText || cfg.commitment.text,
-        time:
-          typeof p?.commitmentTime === 'string' && TIME_RE.test(p.commitmentTime)
-            ? p.commitmentTime
-            : cfg.commitment.time,
+        time: isValidTime(p?.commitmentTime) ? p.commitmentTime : cfg.commitment.time,
         lastCommittedDate: cfg.commitment.lastCommittedDate
       }
 

@@ -1,6 +1,7 @@
 import { randomBytes, randomUUID } from 'crypto'
-import type { ChallengeConfig } from './store'
-import { WORDS } from './words'
+// Explicit .ts extensions so the unit tests can import this module under plain Node.
+import type { ChallengeConfig } from './config-logic.ts'
+import { WORDS } from './words.ts'
 
 // Legible alphabet for 'chars' mode — no easily confused chars (0/O, 1/l/I).
 const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'

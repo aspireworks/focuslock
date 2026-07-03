@@ -13,11 +13,11 @@
     "make-icon": "node scripts/make-logo-icons.cjs",
     "typecheck": "tsc --noEmit",
     "test": "node --test \"tests/**/*.test.ts\"",
+    "lint": "eslint .",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"tests/**/*.ts\"",
     "dist": "node scripts/make-logo-icons.cjs && electron-vite build && electron-builder --win"
   },
   "devDependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
     "@types/node": "^20.14.0",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
@@ -25,7 +25,13 @@
     "electron": "^33.0.0",
     "electron-builder": "^26.15.3",
     "electron-vite": "^2.3.0",
+    "eslint": "^10.6.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "prettier": "^3.9.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "typescript": "^5.5.0",
+    "typescript-eslint": "^8.62.1",
     "vite": "^5.4.0"
   }
 }
