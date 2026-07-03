@@ -15,7 +15,7 @@ import {
   type PanicConfig,
   type Schedule
 } from './store'
-import { getStatus } from './schedule'
+import { getStatus, sanitizeSchedule } from './schedule'
 import { isCommitmentDue, recordCommitment } from './commitment'
 import {
   exemptApp,
@@ -431,7 +431,7 @@ export function registerIpc(): void {
     'set-schedule',
     (_e, schedule: Schedule, scheduleEnabled: boolean, token?: string): ProtectedResult => {
       if (!authorize(token)) return fail()
-      updateConfig({ schedule, scheduleEnabled })
+      updateConfig({ schedule: sanitizeSchedule(schedule), scheduleEnabled: !!scheduleEnabled })
       return { ok: true, config: getConfig() }
     }
   )

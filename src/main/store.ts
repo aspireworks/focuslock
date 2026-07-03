@@ -1,6 +1,7 @@
 import { app } from 'electron'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { dirname, join } from 'path'
+import { sanitizeSchedule } from './schedule'
 
 /** A daily time window in 24h "HH:MM" form. Same-day only (end must be after start). */
 export interface TimeRange {
@@ -176,8 +177,7 @@ function migrate(raw: unknown): Config {
     dailyGamingHours: Math.max(0, Math.min(24, Number(r.dailyGamingHours) || 0)),
     onboardingComplete: r.onboardingComplete === true,
     scheduleEnabled: typeof r.scheduleEnabled === 'boolean' ? r.scheduleEnabled : base.scheduleEnabled,
-    schedule:
-      r.schedule && typeof r.schedule === 'object' ? (r.schedule as Schedule) : base.schedule,
+    schedule: sanitizeSchedule(r.schedule),
     challenge: ((): ChallengeConfig => {
       const ch = (r.challenge ?? {}) as Record<string, unknown>
       return {
