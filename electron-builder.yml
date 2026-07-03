@@ -13,6 +13,12 @@ extraResources:
   - PRIVACY.md
   - THIRD-PARTY-NOTICES.md
   - LICENSE.md
+# Public releases-only repo (code stays private). Releases published here feed
+# electron-updater; changing owner/repo after users install breaks their updates.
+publish:
+  provider: github
+  owner: aspireworks
+  repo: spawncamp-releases
 win:
   icon: build/icon.png
   target:

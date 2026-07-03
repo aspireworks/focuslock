@@ -6,6 +6,7 @@ import { applyHosts, hasManagedBlock } from './websites'
 import { isBlockingNow, isPanicActive, setOnAppBlocked, startEngine, stopEngine } from './engine'
 import { isTampered } from './integrity'
 import { recordLapse } from './stats'
+import { initUpdater, installUpdate, onUpdateReady } from './updater'
 import { startCommitmentScheduler } from './commitment'
 import { registerIpc } from './ipc'
 import {
@@ -26,6 +27,11 @@ app.setAppUserModelId('com.spawncamp.app')
 
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
+// Set when the app is really exiting (quit-and-install), so the hide-to-tray
+// close handler stands aside instead of blocking the update restart.
+let quittingForUpdate = false
+// Version string of a downloaded, ready-to-install update ('' = none).
+let updateReadyVersion = ''
 
 const isGuardian = process.argv.includes('--watchdog')
 // Launched by the SpawncampGuard scheduled task (or a guardian relaunch): start
@@ -86,6 +92,16 @@ if (isUninstallCleanup) {
       // An out-of-band edit to config.json/panic.json costs the day's streak —
       // recorded here because stats are only initialized inside startEngine().
       if (isTampered()) recordLapse()
+      // Background update checks (packaged only). When one is ready, the tray
+      // grows an install item and the Settings banner appears.
+      app.on('before-quit', () => {
+        quittingForUpdate = true
+      })
+      onUpdateReady((version) => {
+        updateReadyVersion = version
+        rebuildTrayMenu()
+      })
+      initUpdater()
       // When a blocked app is caught, bring the window forward and show the lockout takeover.
       setOnAppBlocked((name) => {
         if (!mainWindow || mainWindow.isDestroyed()) return
@@ -145,8 +161,9 @@ function createWindow(): void {
     if (!fromTask) mainWindow?.show()
   })
 
-  // X button hides to tray instead of quitting.
+  // X button hides to tray instead of quitting — unless an update is restarting us.
   mainWindow.on('close', (e) => {
+    if (quittingForUpdate) return
     e.preventDefault()
     mainWindow?.hide()
   })
@@ -164,18 +181,33 @@ function showWindow(): void {
   mainWindow?.focus()
 }
 
+function trayMenu(): Menu {
+  const items: Electron.MenuItemConstructorOptions[] = [
+    { label: 'Open Spawncamp', click: showWindow }
+  ]
+  if (updateReadyVersion) {
+    items.push(
+      { type: 'separator' },
+      {
+        label: `Install update v${updateReadyVersion} — restarts Spawncamp`,
+        click: () => void installUpdate()
+      }
+    )
+  }
+  items.push({ type: 'separator' }, { label: 'Quit Spawncamp', click: requestQuit })
+  return Menu.buildFromTemplate(items)
+}
+
+function rebuildTrayMenu(): void {
+  tray?.setContextMenu(trayMenu())
+}
+
 function createTray(): void {
   try {
     const icon = nativeImage.createFromPath(trayIcon)
     tray = new Tray(icon.isEmpty() ? nativeImage.createEmpty() : icon)
     tray.setToolTip('Spawncamp')
-    tray.setContextMenu(
-      Menu.buildFromTemplate([
-        { label: 'Open Spawncamp', click: showWindow },
-        { type: 'separator' },
-        { label: 'Quit Spawncamp', click: requestQuit }
-      ])
-    )
+    tray.setContextMenu(trayMenu())
     tray.on('click', showWindow)
   } catch (e) {
     console.error('[main] tray creation failed:', e)

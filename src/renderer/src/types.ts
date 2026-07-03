@@ -115,6 +115,11 @@ export interface AppState {
   commitmentDue: boolean
   /** True when config.json/panic.json failed its signature check at load. */
   tamperNotice: boolean
+  /** Auto-update state; 'ready' means a restart installs `version`. */
+  update: {
+    state: 'idle' | 'checking' | 'downloading' | 'ready' | 'up-to-date' | 'error'
+    version: string
+  }
   version: string
 }
 

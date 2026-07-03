@@ -42,6 +42,7 @@ import {
 } from './challenge'
 import { detectGames } from './games'
 import { isTampered } from './integrity'
+import { getUpdateStatus, installUpdate } from './updater'
 import { isDangerousFolder, normalizeExeName, PROTECTED_PROCESSES } from './safety'
 import { applyHosts, normalizeDomain } from './websites'
 import {
@@ -103,6 +104,7 @@ export function registerIpc(): void {
       stats: getStats(),
       commitmentDue: isCommitmentDue(),
       tamperNotice: isTampered(),
+      update: getUpdateStatus(),
       version: app.getVersion()
     }
   })
@@ -548,6 +550,13 @@ export function registerIpc(): void {
       return { ok: true, config: getConfig() }
     }
   )
+
+  // Installing a downloaded update is un-gated: it never weakens blocking
+  // (protection re-arms when the new version boots).
+  ipcMain.handle('install-update', () => {
+    void installUpdate()
+    return { ok: true }
+  })
 
   ipcMain.handle('request-quit', (_e, token?: string): ProtectedResult => {
     if (getConfig().protectionEnabled) return fail() // turn off protection first

@@ -105,6 +105,7 @@ const api = {
     token?: string
   ) => ipcRenderer.invoke('set-challenge', challenge, token),
   requestQuit: (token?: string) => ipcRenderer.invoke('request-quit', token),
+  installUpdate: () => ipcRenderer.invoke('install-update') as Promise<{ ok: boolean }>,
 
   /** Fired by the tray "Quit" item when a block is active. Returns an unsubscribe fn. */
   onQuitRequested: (cb: () => void) => {

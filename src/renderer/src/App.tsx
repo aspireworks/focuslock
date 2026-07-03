@@ -1397,8 +1397,33 @@ export default function App(): JSX.Element {
 
   // ---------------------------------------------------------- Settings
   function renderSettings(): JSX.Element {
+    const upd = state!.update
+    const updateLabel =
+      upd.state === 'ready'
+        ? `update v${upd.version} ready`
+        : upd.state === 'downloading'
+          ? 'downloading update…'
+          : upd.state === 'up-to-date'
+            ? 'up to date'
+            : '' // idle / checking / error: say nothing rather than worry the user
     return (
       <div className="page page-settings">
+        {upd.state === 'ready' && (
+          <div className="card">
+            <div className="setting-row">
+              <div className="setting-row-main">
+                <div className="card-title">Update ready — v{upd.version}</div>
+                <p className="card-help" style={{ margin: 0 }}>
+                  Installing restarts Spawncamp and keeps protection on. No challenge needed —
+                  updating never weakens your blocks.
+                </p>
+              </div>
+              <button className="btn accent" onClick={() => void window.api.installUpdate()}>
+                Restart &amp; update
+              </button>
+            </div>
+          </div>
+        )}
         {/* Your name */}
         <div className="card">
           <div className="card-title">Your name</div>
@@ -1723,7 +1748,10 @@ export default function App(): JSX.Element {
           >
             Licenses
           </button>
-          <span className="version">Spawncamp v{version}</span>
+          <span className="version">
+            Spawncamp v{version}
+            {updateLabel ? ` — ${updateLabel}` : ''}
+          </span>
         </div>
       </div>
     )
