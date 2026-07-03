@@ -466,7 +466,17 @@ machines.
 
 ---
 
-### 3.4 `[ ]` Ship only what belongs in the installer (audit C4)
+### 3.4 `[x]` Ship only what belongs in the installer (audit C4)
+
+**Status:** Done 2026-07-03, commit `361adf1`. asar before: 145 entries incl.
+`brand/`, `preview/`, all `design_handoff_focuslock_redesign/` screenshots +
+design docs, `PRD.md`, `tests/`, `.claude/`, and a full `node_modules` React
+copy. After: exactly `out/**`, `resources/tray.png`, `package.json`. Verified
+on the packaged build: shell boots, Space Grotesk + JetBrains Mono fonts load,
+logo renders, tray.png decodes from the asar. Installer 79.4 MB → 76.6 MB
+(the bulk is Electron itself). Deviation from the spec's sketch: `resources/**`
+is kept in `files` — the `?asset` import references it at the asar root, it is
+NOT copied into `out/` (the spec's `extraResources: []` note anticipated this).
 
 **Problem:** electron-builder's `files` list is exclusion-based, so `brand/`,
 `preview/`, `design_handoff_focuslock_redesign/` (internal design docs and
