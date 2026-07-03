@@ -19,6 +19,8 @@ const api = {
   devSetPaused: (value: boolean) => ipcRenderer.invoke('dev-set-paused', value),
   setProtection: (enabled: boolean, token?: string) =>
     ipcRenderer.invoke('set-protection', enabled, token),
+  setStrictMode: (enabled: boolean, token?: string) =>
+    ipcRenderer.invoke('set-strict-mode', enabled, token),
   setBlockMessage: (text: string) => ipcRenderer.invoke('set-block-message', text),
   setName: (name: string) => ipcRenderer.invoke('set-name', name),
   openLogs: () => ipcRenderer.invoke('open-logs'),

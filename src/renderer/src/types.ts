@@ -54,6 +54,10 @@ export interface Config {
   /** Onboarding sites whose hosts write failed — retryable from the Websites tab. */
   pendingSites: string[]
   protectionEnabled: boolean
+  /** Challenge required for every protective change, at all hours; pause unavailable. */
+  strictMode: boolean
+  /** Day key when a pending strict-mode switch-off takes effect; '' = none. */
+  strictModeOffAt: string
   blockMessage: string
   userName: string
   dailyGamingHours: number

@@ -542,6 +542,23 @@ export default function App(): JSX.Element {
     flash('Daily commitment saved.')
   }, [commitEnabled, commitText, commitTime, refresh, flash])
 
+  const toggleStrict = useCallback(async () => {
+    const cfg = stateRef.current?.config
+    if (!cfg) return
+    if (!cfg.strictMode || cfg.strictModeOffAt) {
+      // Turning on (or cancelling a pending switch-off) is free.
+      await window.api.setStrictMode(true)
+      await refresh()
+      flash('Strict mode on — every protective change now needs the challenge.')
+      return
+    }
+    const ok = await protectedCall(
+      (token) => window.api.setStrictMode(false, token) as Promise<ProtectedResult>,
+      'Turning off strict mode'
+    )
+    if (ok) flash('Strict mode ends tonight at midnight.')
+  }, [protectedCall, refresh, flash])
+
   const toggleProtection = useCallback(async () => {
     if (stateRef.current?.config.protectionEnabled) {
       await protectedCall(
@@ -1594,6 +1611,32 @@ export default function App(): JSX.Element {
           </div>
         </div>
 
+        {/* Strict mode */}
+        <div className="card">
+          <div className="setting-row">
+            <div className="setting-row-main">
+              <div className="card-title">Strict mode</div>
+              <p className="card-help">
+                {config.strictMode
+                  ? config.strictModeOffAt
+                    ? 'On — strict mode ends tonight at midnight.'
+                    : 'On — every protective change needs the challenge, at all hours. Pausing is unavailable.'
+                  : 'Off — outside blocking hours, settings can be changed freely. Turn on to require the challenge around the clock.'}
+              </p>
+            </div>
+            <button
+              className={config.strictMode && !config.strictModeOffAt ? 'btn ghost' : 'btn accent'}
+              onClick={() => void toggleStrict()}
+            >
+              {config.strictMode
+                ? config.strictModeOffAt
+                  ? 'Keep on'
+                  : 'Turn off'
+                : 'Turn on'}
+            </button>
+          </div>
+        </div>
+
         {/* Panic mode */}
         <div className="card">
           <div className="card-title">Panic mode</div>
@@ -1741,7 +1784,12 @@ export default function App(): JSX.Element {
                   Resumes {pauseLabel(pausedUntil, now)} · Resume now
                 </button>
               ) : (
-                <button className="btn pause" onClick={() => setShowPauseMenu((v) => !v)}>
+                <button
+                  className="btn pause"
+                  disabled={config.strictMode}
+                  title={config.strictMode ? 'Strict mode — no pausing' : undefined}
+                  onClick={() => setShowPauseMenu((v) => !v)}
+                >
                   Pause
                 </button>
               )}

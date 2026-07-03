@@ -76,6 +76,10 @@ export interface Config {
   pendingSites: string[]
   /** Run-on-boot + self-relaunch watchdog. Turning off is challenge-gated. */
   protectionEnabled: boolean
+  /** When on: every protective change needs the challenge at all hours, and pause is unavailable. */
+  strictMode: boolean
+  /** Pending switch-off day key ("YYYY-MM-DD"); strict stays on until that local midnight. '' = none. */
+  strictModeOffAt: string
   /** Shown in the "you're blocked" notification when an app is killed. */
   blockMessage: string
   /** For light personalization (greeting, block messages). */
@@ -103,6 +107,8 @@ const DEFAULT_CONFIG: Config = {
   blockedSites: [],
   pendingSites: [],
   protectionEnabled: false,
+  strictMode: false,
+  strictModeOffAt: '',
   blockMessage: 'Back to what matters. You’ve got this.',
   userName: '',
   dailyGamingHours: 0,
@@ -193,6 +199,11 @@ function migrate(raw: unknown): Config {
     blockedSites,
     pendingSites,
     protectionEnabled: r.protectionEnabled === true,
+    strictMode: r.strictMode === true,
+    strictModeOffAt:
+      typeof r.strictModeOffAt === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(r.strictModeOffAt)
+        ? r.strictModeOffAt
+        : '',
     blockMessage: typeof r.blockMessage === 'string' ? r.blockMessage : base.blockMessage,
     userName: typeof r.userName === 'string' ? r.userName : '',
     dailyGamingHours: Math.max(0, Math.min(24, Number(r.dailyGamingHours) || 0)),

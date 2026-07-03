@@ -64,11 +64,12 @@ function fail(): ProtectedResult {
 
 /**
  * Protective actions (anything that weakens the block) require a valid unlock token,
- * but only while enforcement is active. Outside that, edits are free.
+ * but only while enforcement is active. Outside that, edits are free — unless
+ * strict mode is on, which closes the "2 a.m. outside the schedule" loophole.
  */
 function authorize(token: string | undefined): boolean {
   if (isPanicActive()) return false // panic lockdown can't be lifted early
-  if (!isBlockingNow()) return true
+  if (!getConfig().strictMode && !isBlockingNow()) return true
   return isValidToken(token)
 }
 
@@ -309,6 +310,7 @@ export function registerIpc(): void {
   ipcMain.handle(
     'pause',
     (_e, minutes: 15 | 60 | 'today', token?: string): ProtectedResult & { pausedUntil?: number } => {
+      if (getConfig().strictMode) return fail() // strict mode: no pausing, period
       if (!authorize(token)) return fail()
       let until: number
       if (minutes === 'today') {
@@ -354,6 +356,25 @@ export function registerIpc(): void {
       stopWatchdog()
       removeGuardTask()
     }
+    return { ok: true, config: getConfig() }
+  })
+
+  // Strict mode. Turning ON is free (only strengthens) and cancels any pending
+  // switch-off. Turning OFF needs the challenge AND only takes effect at the next
+  // local midnight — the cooling-off is the point.
+  ipcMain.handle('set-strict-mode', (_e, enabled: boolean, token?: string): ProtectedResult => {
+    const cfg = getConfig()
+    if (enabled) {
+      updateConfig({ strictMode: true, strictModeOffAt: '' })
+      return { ok: true, config: getConfig() }
+    }
+    if (!cfg.strictMode) return { ok: true, config: getConfig() }
+    if (isPanicActive() || !isValidToken(token)) return fail()
+    const d = new Date()
+    d.setDate(d.getDate() + 1)
+    const pad = (n: number): string => String(n).padStart(2, '0')
+    const tomorrow = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+    updateConfig({ strictModeOffAt: tomorrow }) // strictMode itself stays on until midnight
     return { ok: true, config: getConfig() }
   })
 

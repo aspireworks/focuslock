@@ -3,7 +3,7 @@ import { promisify } from 'util'
 import { app, Notification } from 'electron'
 import { existsSync, readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
-import { getConfig } from './store'
+import { getConfig, updateConfig } from './store'
 import { getStatus } from './schedule'
 import { PROTECTED_PROCESSES } from './safety'
 import { flagTamper, signValue, verifySigned } from './integrity'
@@ -370,8 +370,21 @@ async function killByPid(pid: number): Promise<void> {
   }
 }
 
+/** Flip a pending strict-mode switch-off once its day (local midnight) arrives. */
+function checkStrictModeOff(cfg: ReturnType<typeof getConfig>): void {
+  if (!cfg.strictMode || !cfg.strictModeOffAt) return
+  const d = new Date()
+  const pad = (n: number): string => String(n).padStart(2, '0')
+  const todayKey = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+  if (todayKey >= cfg.strictModeOffAt) {
+    updateConfig({ strictMode: false, strictModeOffAt: '' })
+    console.log('[engine] strict mode ended (scheduled switch-off day reached)')
+  }
+}
+
 async function tick(): Promise<void> {
   tickCount++
+  checkStrictModeOff(getConfig()) // must run before any early return below
   const panicActive = isPanicActive()
   if (isPaused() && !panicActive) return
   if (pauseWasActive) {
