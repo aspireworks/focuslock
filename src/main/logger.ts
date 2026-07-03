@@ -47,7 +47,7 @@ function writeLine(level: string, args: unknown[]): void {
  * Mirror console output to a file and capture crashes — so a beta tester can send
  * us their log when something misbehaves. Call once per process, early.
  */
-export function initLogger(role: 'main' | 'guardian'): void {
+export function initLogger(role: 'main' | 'guardian' | 'uninstall-cleanup'): void {
   if (started) return
   started = true
   logsDir = join(app.getPath('userData'), 'logs')

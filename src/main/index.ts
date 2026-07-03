@@ -1,7 +1,8 @@
 import { app, BrowserWindow, Menu, Tray, nativeImage } from 'electron'
 import { join } from 'path'
 import trayIcon from '../../resources/tray.png?asset'
-import { getConfig, initStore } from './store'
+import { getConfig, initStore, updateConfig } from './store'
+import { applyHosts, hasManagedBlock } from './websites'
 import { isBlockingNow, isPanicActive, setOnAppBlocked, startEngine, stopEngine } from './engine'
 import { isTampered } from './integrity'
 import { recordLapse } from './stats'
@@ -30,8 +31,33 @@ const isGuardian = process.argv.includes('--watchdog')
 // Launched by the SpawncampGuard scheduled task (or a guardian relaunch): start
 // to the tray without showing (or focusing) the window.
 const fromTask = process.argv.includes('--from-task')
+// Launched by the NSIS uninstaller (before file removal): undo every machine
+// change — protection/autostart/guard task/hosts+DoH — then exit.
+const isUninstallCleanup = process.argv.includes('--uninstall-cleanup')
 
-if (isGuardian) {
+if (isUninstallCleanup) {
+  app.on('window-all-closed', () => {})
+  app.whenReady().then(async () => {
+    initLogger('uninstall-cleanup')
+    try {
+      initStore()
+      updateConfig({ protectionEnabled: false }) // any surviving guardian stands down
+      applyAutostart(false)
+      await removeGuardTask()
+      if (hasManagedBlock()) {
+        // One UAC prompt to restore the hosts file and remove the DoH policies.
+        // Bounded so a stalled elevation prompt can never hang the uninstaller.
+        await Promise.race([
+          applyHosts([]),
+          new Promise((resolve) => setTimeout(resolve, 120_000))
+        ])
+      }
+    } catch (e) {
+      console.error('[uninstall-cleanup] partial failure (continuing):', e)
+    }
+    app.exit(0) // never block the uninstall, even on partial failure
+  })
+} else if (isGuardian) {
   // Lightweight guardian: no window, no engine — just relaunch the main app if it dies.
   app.on('window-all-closed', () => {})
   app.whenReady().then(() => {

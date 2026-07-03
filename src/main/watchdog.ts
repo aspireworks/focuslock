@@ -93,12 +93,16 @@ export function installGuardTask(): void {
   })
 }
 
-export function removeGuardTask(): void {
-  if (!app.isPackaged) return
-  exec(`schtasks /Delete /F /TN "${GUARD_TASK}"`, { windowsHide: true }, (e) => {
-    // "task not found" is fine — treat any other failure as log-worthy.
-    if (e && !/ERROR:/i.test(String(e.message))) console.error('[watchdog] guard task remove failed:', e)
-    else console.log('[watchdog] guard task removed (or was absent)')
+export function removeGuardTask(): Promise<void> {
+  if (!app.isPackaged) return Promise.resolve()
+  return new Promise((resolve) => {
+    exec(`schtasks /Delete /F /TN "${GUARD_TASK}"`, { windowsHide: true }, (e) => {
+      // "task not found" is fine — treat any other failure as log-worthy.
+      if (e && !/ERROR:/i.test(String(e.message)))
+        console.error('[watchdog] guard task remove failed:', e)
+      else console.log('[watchdog] guard task removed (or was absent)')
+      resolve()
+    })
   })
 }
 

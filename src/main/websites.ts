@@ -3,7 +3,7 @@ import { exec } from 'child_process'
 import { promisify } from 'util'
 import { existsSync, readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
-import { buildHosts, buildPsScript, psq, verifyHostsApplied } from './hosts-logic'
+import { buildHosts, buildPsScript, MARK_START, psq, verifyHostsApplied } from './hosts-logic'
 
 export { normalizeDomain } from './hosts-logic'
 
@@ -13,6 +13,15 @@ const HOSTS = 'C:\\Windows\\System32\\drivers\\etc\\hosts'
 
 const DECLINED_ERROR =
   'Windows didn’t allow the change — the admin prompt may have been declined.'
+
+/** True when the hosts file currently contains our managed block (readable without admin). */
+export function hasManagedBlock(): boolean {
+  try {
+    return existsSync(HOSTS) && readFileSync(HOSTS, 'utf-8').includes(MARK_START)
+  } catch {
+    return false
+  }
+}
 
 /**
  * Apply the desired blocked-domain set to the hosts file (+ DoH policies) via one
