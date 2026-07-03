@@ -67,6 +67,11 @@ if (isGuardian) {
 }
 
 function createWindow(): void {
+  // Packaged builds get no menu accelerators (Ctrl+Shift+I DevTools, Ctrl+R reload):
+  // from a DevTools console any protected IPC call is one line away. The tray menu
+  // is separate and unaffected. Native Ctrl+C/V in inputs works without a menu on Windows.
+  if (app.isPackaged) Menu.setApplicationMenu(null)
+
   mainWindow = new BrowserWindow({
     width: 960,
     height: 720,
@@ -79,7 +84,8 @@ function createWindow(): void {
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
-      contextIsolation: true
+      contextIsolation: true,
+      devTools: !app.isPackaged
     }
   })
 
