@@ -450,7 +450,18 @@ self-relaunching app is unusually prone to antivirus false positives.
 
 ---
 
-### 3.3 `[ ]` Auto-update (audit C3)
+### 3.3 `[~]` Auto-update (audit C3)
+
+**Status:** Code done 2026-07-03, commit `891872f`, pointed at
+**aspireworks/spawncamp-releases** (Connor's pick). Verified on the packaged
+build: `app-update.yml` bakes in the right repo; with the repo not yet
+existing the check fails quietly (footer shows just the version, no error
+leak). Protection interplay implemented as specced (watchdog + guard task
+stopped before `quitAndInstall`, re-armed on next boot; hide-to-tray close
+handler stands aside during the update restart). **Remaining to check the
+box:** (a) Connor creates the empty public repo `spawncamp-releases`,
+(b) run the full 1.0.0 → 1.0.1 loop with a draft release per step 5 (also on
+the 3.7 matrix).
 
 **Problem:** No update mechanism — every shipped bug is permanent on users'
 machines.
