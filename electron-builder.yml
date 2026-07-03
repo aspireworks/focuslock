@@ -2,15 +2,12 @@ appId: com.spawncamp.app
 productName: Spawncamp
 directories:
   buildResources: build
+# Allow-list, not exclusions: everything the app needs at runtime and nothing else.
+# resources/ stays because the main process resolves tray.png there (?asset import).
 files:
-  - '!**/.vscode/*'
-  - '!src/*'
-  - '!scripts/*'
-  - '!build/*'
-  - '!electron.vite.config.{js,ts,mjs,cjs}'
-  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
-  - '!{.prettierignore,.prettierrc,.eslintrc.cjs,CHANGELOG.md,README.md}'
-  - '!{install.log,electron-builder.yml}'
+  - out/**
+  - resources/**
+  - package.json
 win:
   icon: build/icon.png
   target:
