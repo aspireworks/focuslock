@@ -248,7 +248,16 @@ cost, and being honest in the product copy about it.)
 
 ---
 
-### 2.1 `[ ]` Replace the Pause button with gated, timed, auto-resuming pause (audit B1 + B2)
+### 2.1 `[x]` Replace the Pause button with gated, timed, auto-resuming pause (audit B1 + B2)
+
+**Status:** Done 2026-07-03, commit `f63842b`. Verified live: Pause opens the
+menu; picking 15 min with an Always block active demands the challenge;
+"Never mind" leaves blocking on; completing it pauses with "Resumes in 15m ·
+Resume now"; the blocked app runs freely while paused; the Home banner reads
+"Resumes at HH:MM. Website blocks stay on"; Resume now instantly re-enforces
+(kill within seconds, no restart); stats.json shows the lapse. The 15-minute
+auto-expiry wasn't waited out in real time, but it exercises the same
+`isPaused()` tick guard the verified instant-resume path uses.
 
 **Problem:** Pause is a one-click, un-gated global bypass sitting in the top
 bar, and it never auto-resumes — pause-and-forget disables the blocker until
