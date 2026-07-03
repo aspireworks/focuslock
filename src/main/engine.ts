@@ -28,15 +28,27 @@ let timer: NodeJS.Timeout | null = null
 let killLog: KillEvent[] = []
 let tickCount = 0
 
-// Dev override: when paused, nothing is enforced and nothing counts as "locked".
-// In-memory only, so a restart always re-arms blocking.
-let paused = false
-export function setPaused(v: boolean): void {
-  paused = v
-  console.log('[engine] paused =', v)
+// Timed pause: while Date.now() < pausedUntil, nothing is enforced and nothing
+// counts as "locked". In-memory only, so a restart always re-arms blocking —
+// that's the right integrity default.
+let pausedUntil = 0
+let pauseWasActive = false
+
+export function setPausedUntil(ts: number): void {
+  pausedUntil = Math.max(0, Math.floor(ts) || 0)
+  pauseWasActive = isPaused()
+  console.log(
+    '[engine] pausedUntil =',
+    pausedUntil ? new Date(pausedUntil).toISOString() : 'off'
+  )
 }
+
+export function getPausedUntil(): number {
+  return pausedUntil
+}
+
 export function isPaused(): boolean {
-  return paused
+  return Date.now() < pausedUntil
 }
 
 // ---- Temporary exemptions (earned by completing the unlock challenge) ----
@@ -255,7 +267,7 @@ export function startPanic(minutes: number): { active: boolean; until: number } 
 /** Is any enforcement active right now? Used to decide if protective actions need a challenge. */
 export function isBlockingNow(): boolean {
   if (isPanicActive()) return true
-  if (paused) return false
+  if (isPaused()) return false
   const cfg = getConfig()
   const schedActive = getStatus(cfg.schedule, cfg.scheduleEnabled, new Date()).active
   rollUsageDate()
@@ -344,7 +356,12 @@ async function killByPid(pid: number): Promise<void> {
 async function tick(): Promise<void> {
   tickCount++
   const panicActive = isPanicActive()
-  if (paused && !panicActive) return
+  if (isPaused() && !panicActive) return
+  if (pauseWasActive) {
+    // Pause just expired on its own — log the transition once.
+    pauseWasActive = false
+    console.log('[engine] pause expired — blocking resumed')
+  }
   const cfg = getConfig()
   if (!panicActive && cfg.blocklist.length === 0 && (cfg.folderBlocks?.length ?? 0) === 0) return
 

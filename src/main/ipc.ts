@@ -22,12 +22,13 @@ import {
   getExemptions,
   getKillLog,
   getPanic,
+  getPausedUntil,
   getUsage,
   isBlockingNow,
   isPanicActive,
   isPaused,
   listRunningApps,
-  setPaused,
+  setPausedUntil,
   startPanic,
   stopEngine
 } from './engine'
@@ -88,6 +89,7 @@ export function registerIpc(): void {
       status,
       killLog: getKillLog(),
       paused: isPaused(),
+      pausedUntil: getPausedUntil(),
       usage: getUsage(),
       panic: getPanic(),
       exemptions: getExemptions(),
@@ -294,12 +296,40 @@ export function registerIpc(): void {
     return result
   })
 
-  // ---- Dev override (intentionally NOT challenge-gated) ----
-  ipcMain.handle('set-paused', (_e, value: boolean) => {
-    if (value) recordLapse() // pausing opens a gaming window — today is no longer a clean day
-    setPaused(Boolean(value))
-    return { ok: true, paused: isPaused() }
+  // Timed pause — challenge-gated while enforcement is active, always a lapse,
+  // always auto-resumes. 'today' means "until the next local midnight".
+  ipcMain.handle(
+    'pause',
+    (_e, minutes: 15 | 60 | 'today', token?: string): ProtectedResult & { pausedUntil?: number } => {
+      if (!authorize(token)) return fail()
+      let until: number
+      if (minutes === 'today') {
+        const d = new Date()
+        d.setHours(24, 0, 0, 0) // next local midnight
+        until = d.getTime()
+      } else {
+        const m = minutes === 60 ? 60 : 15
+        until = Date.now() + m * 60_000
+      }
+      recordLapse() // pausing opens a gaming window — today is no longer a clean day
+      setPausedUntil(until)
+      return { ok: true, pausedUntil: until }
+    }
+  )
+
+  // Resuming early only strengthens — never gated.
+  ipcMain.handle('resume', () => {
+    setPausedUntil(0)
+    return { ok: true }
   })
+
+  // Dev-only instant toggle for testing; packaged builds have no un-gated pause path.
+  if (!app.isPackaged) {
+    ipcMain.handle('dev-set-paused', (_e, value: boolean) => {
+      setPausedUntil(value ? Date.now() + 24 * 3600_000 : 0)
+      return { ok: true, paused: isPaused() }
+    })
+  }
 
   // Stay-on protection. Turning ON is free; turning OFF needs the challenge (and never during panic).
   ipcMain.handle('set-protection', (_e, enabled: boolean, token?: string): ProtectedResult => {

@@ -8,7 +8,15 @@ const api = {
     ipcRenderer.invoke('add-app', name, mode, dailyLimitMinutes),
   setAppMode: (name: string, mode: string, dailyLimitMinutes?: number, token?: string) =>
     ipcRenderer.invoke('set-app-mode', name, mode, dailyLimitMinutes, token),
-  setPaused: (value: boolean) => ipcRenderer.invoke('set-paused', value),
+  pause: (minutes: 15 | 60 | 'today', token?: string) =>
+    ipcRenderer.invoke('pause', minutes, token) as Promise<{
+      ok: boolean
+      reason?: string
+      pausedUntil?: number
+    }>,
+  resume: () => ipcRenderer.invoke('resume') as Promise<{ ok: boolean }>,
+  /** Dev builds only — instant un-gated toggle for testing. */
+  devSetPaused: (value: boolean) => ipcRenderer.invoke('dev-set-paused', value),
   setProtection: (enabled: boolean, token?: string) =>
     ipcRenderer.invoke('set-protection', enabled, token),
   setBlockMessage: (text: string) => ipcRenderer.invoke('set-block-message', text),

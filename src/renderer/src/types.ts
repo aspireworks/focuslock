@@ -100,6 +100,8 @@ export interface AppState {
   status: BlockStatus
   killLog: KillEvent[]
   paused: boolean
+  /** Epoch ms when the current pause auto-resumes; 0 when not paused. */
+  pausedUntil: number
   usage: Usage
   panic: { active: boolean; until: number }
   /** Active unlock exemptions: lowercased exe name -> expiry epoch ms. */

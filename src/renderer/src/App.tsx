@@ -126,6 +126,16 @@ function prettyName(name: string): string {
   return b.charAt(0).toUpperCase() + b.slice(1)
 }
 
+/** "in 42m" / "in 1h 12m" for short pauses, "at HH:MM" for longer ones. */
+function pauseLabel(until: number, now: Date): string {
+  const mins = Math.max(1, Math.round((until - now.getTime()) / 60_000))
+  if (mins >= 90) {
+    return `at ${new Date(until).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+  }
+  if (mins >= 60) return `in 1h ${mins - 60}m`
+  return `in ${mins}m`
+}
+
 function greeting(d: Date): string {
   const h = d.getHours()
   if (h < 12) return 'Good morning'
@@ -164,6 +174,7 @@ export default function App(): JSX.Element {
 
   // Overlay/preview UI flags
   const [lockoutPreview, setLockoutPreview] = useState(false)
+  const [showPauseMenu, setShowPauseMenu] = useState(false)
   // The caught app: raw exe name (what the engine matches) + pretty name (what we show).
   const [blockedApp, setBlockedApp] = useState<{ raw: string; pretty: string } | null>(null)
   const [replayOnb, setReplayOnb] = useState(false)
@@ -445,11 +456,25 @@ export default function App(): JSX.Element {
     flash('Website blocks applied.')
   }, [refresh, flash])
 
-  const togglePause = useCallback(async () => {
-    const cur = stateRef.current?.paused ?? false
-    await window.api.setPaused(!cur)
+  const pauseFor = useCallback(
+    async (minutes: 15 | 60 | 'today') => {
+      setShowPauseMenu(false)
+      const label =
+        minutes === 'today' ? 'until tomorrow' : minutes === 60 ? 'for 1 hour' : 'for 15 minutes'
+      const ok = await protectedCall(
+        (token) => window.api.pause(minutes, token) as Promise<ProtectedResult>,
+        `Pausing blocking ${label}`
+      )
+      if (ok) flash(`Blocking paused ${label} — this breaks today's streak.`)
+    },
+    [protectedCall, flash]
+  )
+
+  const resume = useCallback(async () => {
+    await window.api.resume()
     await refresh()
-  }, [refresh])
+    flash('Blocking resumed.')
+  }, [refresh, flash])
 
   const saveChallenge = useCallback(async () => {
     const ok = await protectedCall(
@@ -678,7 +703,7 @@ export default function App(): JSX.Element {
     return <div className="loading">Loading Spawncamp…</div>
   }
 
-  const { status, config, killLog, paused, version, stats } = state
+  const { status, config, killLog, paused, pausedUntil, version, stats } = state
   const blockedSet = new Set(config.blocklist.map((a) => a.name.toLowerCase()))
   const blockMsgDirty = blockMsg !== config.blockMessage
   const nameDirty = nameInput.trim() !== config.userName && nameInput.trim().length > 0
@@ -751,11 +776,11 @@ export default function App(): JSX.Element {
           </div>
           <div className="status-main">
             <div className="status-title">
-              {paused ? 'Blocking paused' : 'Protection active'}
+              {paused ? 'App blocking paused' : 'Protection active'}
             </div>
             <div className="status-sub">
               {paused
-                ? "Nothing is being blocked right now. Resume when you're ready."
+                ? `Resumes at ${new Date(pausedUntil).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}. Website blocks stay on.`
                 : `${config.blocklist.length} ${config.blocklist.length === 1 ? 'app' : 'apps'} and ${config.blockedSites.length} ${config.blockedSites.length === 1 ? 'site' : 'sites'} locked down · ${enforcing ? 'enforcing now' : 'armed'}`}
             </div>
           </div>
@@ -1709,12 +1734,27 @@ export default function App(): JSX.Element {
           </div>
           <div className="topbar-right">
             <span className="clock">{clockStr}</span>
-            <button
-              className={paused ? 'btn pause on' : 'btn pause'}
-              onClick={() => void togglePause()}
-            >
-              {paused ? 'Resume blocking' : 'Pause'}
-            </button>
+            <div className="pause-wrap">
+              {paused ? (
+                <button className="btn pause on" onClick={() => void resume()}>
+                  Resumes {pauseLabel(pausedUntil, now)} · Resume now
+                </button>
+              ) : (
+                <button className="btn pause" onClick={() => setShowPauseMenu((v) => !v)}>
+                  Pause
+                </button>
+              )}
+              {showPauseMenu && !paused && (
+                <>
+                  <div className="pause-menu-backdrop" onClick={() => setShowPauseMenu(false)} />
+                  <div className="pause-menu">
+                    <button onClick={() => void pauseFor(15)}>15 minutes</button>
+                    <button onClick={() => void pauseFor(60)}>1 hour</button>
+                    <button onClick={() => void pauseFor('today')}>Until tomorrow</button>
+                  </div>
+                </>
+              )}
+            </div>
             <button className="btn panic" onClick={() => void triggerPanic()}>
               PANIC
             </button>
