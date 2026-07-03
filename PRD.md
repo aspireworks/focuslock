@@ -159,7 +159,14 @@ gets a success toast and zero enforcement, forever.
 
 ---
 
-### 1.6 `[ ]` Surface website failures during onboarding (audit A6)
+### 1.6 `[x]` Surface website failures during onboarding (audit A6)
+
+**Status:** Done 2026-07-03, commit `469adcb`. The Websites-tab banner was
+verified rendering live (lists the pending sites + Retry now). **Needs manual
+QA with a real UAC decline** (can't be automated — the prompt is on the secure
+desktop): run onboarding with a site selected, decline the prompt, confirm the
+warning screen appears, then Retry now + accept applies all sites in one
+prompt. Also covered by the 3.7 checklist.
 
 **Problem:** If the UAC prompt is declined during onboarding, setup completes
 with "You're set" and the user falsely believes their sites are blocked.
