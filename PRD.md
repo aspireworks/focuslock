@@ -396,7 +396,19 @@ optional for shipping to strangers, except 3.8.
 
 ---
 
-### 3.1 `[ ]` Clean uninstall — restore hosts, DoH policies, task, autostart (audit C1)
+### 3.1 `[x]` Clean uninstall — restore hosts, DoH policies, task, autostart (audit C1)
+
+**Status:** Done 2026-07-03, commit `a4aaaf5`. Verified on the packaged build:
+with protection ON (guard task + `com.spawncamp.app` Run entry live),
+`--uninstall-cleanup` exited 0, removed the task and the Run entry, cleared
+`protectionEnabled`, left no processes, kept userData, and fired no UAC prompt
+since no managed hosts block existed (the skip works). The NSIS installer
+compiles with the hook. Additions beyond spec: the whole uninstall hook is
+wrapped in `${ifNot} ${isUpdated}` so auto-update uninstalls never strip
+blocks (pre-empts the 3.3 interplay), and the hosts UAC wait is bounded at
+120s so a stalled prompt can't hang uninstall. **The full VM matrix run
+(sites blocked + DoH keys verified gone + real installer/uninstaller) is the
+3.7 checklist item.**
 
 **Problem:** Uninstalling currently leaves the user's machine modified: hosts
 entries stay (their sites stay blocked **forever**, with the app gone), the
