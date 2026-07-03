@@ -18,6 +18,8 @@ import {
 import { getStatus } from './schedule'
 import { isCommitmentDue, recordCommitment } from './commitment'
 import {
+  exemptApp,
+  getExemptions,
   getKillLog,
   getPanic,
   getUsage,
@@ -86,6 +88,7 @@ export function registerIpc(): void {
       paused: isPaused(),
       usage: getUsage(),
       panic: getPanic(),
+      exemptions: getExemptions(),
       stats: getStats(),
       commitmentDue: isCommitmentDue(),
       version: app.getVersion()
@@ -317,6 +320,18 @@ export function registerIpc(): void {
     return { ok: true, config: getConfig() }
   })
 
+  // A completed unlock challenge buys a temporary exemption for the caught app.
+  // It's the honest trade: access now, streak gone today. Never during panic.
+  ipcMain.handle('exempt-app', (_e, name: string, token?: string): ProtectedResult & { minutes?: number } => {
+    if (isPanicActive() || !isValidToken(token)) return fail()
+    const n = String(name).trim()
+    if (!n) return { ok: false, error: 'No app to unlock.' }
+    const minutes = clamp(getConfig().challenge.exemptMinutes, 5, 60)
+    exemptApp(n, minutes)
+    recordLapse() // taking the unlock breaks today's streak
+    return { ok: true, minutes, config: getConfig() }
+  })
+
   // ---- Challenge ----
   ipcMain.handle('start-challenge', () => {
     const ch = getConfig().challenge
@@ -418,7 +433,8 @@ export function registerIpc(): void {
         wordCount: clamp(Number(patch?.wordCount ?? cfg.challenge.wordCount), 5, 300),
         customText:
           typeof patch?.customText === 'string' ? patch.customText : cfg.challenge.customText,
-        timerMinutes: clamp(Number(patch?.timerMinutes ?? cfg.challenge.timerMinutes), 1, 180)
+        timerMinutes: clamp(Number(patch?.timerMinutes ?? cfg.challenge.timerMinutes), 1, 180),
+        exemptMinutes: clamp(Number(patch?.exemptMinutes ?? cfg.challenge.exemptMinutes), 5, 60)
       }
       updateConfig({ challenge: next })
       return { ok: true, config: getConfig() }

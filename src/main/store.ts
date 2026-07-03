@@ -48,6 +48,8 @@ export interface ChallengeConfig {
   customText: string
   /** Countdown length in minutes for 'timer' mode. */
   timerMinutes: number
+  /** Minutes of access a completed unlock challenge grants (5–60). */
+  exemptMinutes: number
 }
 
 /** Daily reaffirmation ritual: each morning the user retypes this to "commit" to the day. */
@@ -102,7 +104,14 @@ const DEFAULT_CONFIG: Config = {
   scheduleEnabled: true,
   schedule: {},
   // Word/char counts are tuned to ~3 minutes of typing; the timer default is 5 minutes.
-  challenge: { type: 'words', length: 400, wordCount: 140, customText: '', timerMinutes: 5 },
+  challenge: {
+    type: 'words',
+    length: 400,
+    wordCount: 140,
+    customText: '',
+    timerMinutes: 5,
+    exemptMinutes: 15
+  },
   panic: { minutes: 5, mantra: DEFAULT_MANTRA, blockBrowsers: true },
   commitment: { enabled: true, text: DEFAULT_COMMITMENT, time: '09:00', lastCommittedDate: '' }
 }
@@ -176,7 +185,11 @@ function migrate(raw: unknown): Config {
         length: Number(ch.length) || base.challenge.length,
         wordCount: Number(ch.wordCount) || base.challenge.wordCount,
         customText: typeof ch.customText === 'string' ? ch.customText : '',
-        timerMinutes: Number(ch.timerMinutes) || base.challenge.timerMinutes
+        timerMinutes: Number(ch.timerMinutes) || base.challenge.timerMinutes,
+        exemptMinutes: Math.max(
+          5,
+          Math.min(60, Number(ch.exemptMinutes) || base.challenge.exemptMinutes)
+        )
       }
     })(),
     panic: ((): PanicConfig => {

@@ -163,7 +163,8 @@ export default function App(): JSX.Element {
 
   // Overlay/preview UI flags
   const [lockoutPreview, setLockoutPreview] = useState(false)
-  const [blockedApp, setBlockedApp] = useState<string | null>(null)
+  // The caught app: raw exe name (what the engine matches) + pretty name (what we show).
+  const [blockedApp, setBlockedApp] = useState<{ raw: string; pretty: string } | null>(null)
   const [replayOnb, setReplayOnb] = useState(false)
 
   // Schedule editing draft
@@ -196,6 +197,7 @@ export default function App(): JSX.Element {
   const [chWords, setChWords] = useState(140)
   const [chCustom, setChCustom] = useState('')
   const [chTimer, setChTimer] = useState(5)
+  const [chExempt, setChExempt] = useState(15)
 
   // Panic config drafts
   const [panicMin, setPanicMin] = useState(5)
@@ -263,6 +265,7 @@ export default function App(): JSX.Element {
       setChWords(state.config.challenge.wordCount)
       setChCustom(state.config.challenge.customText)
       setChTimer(state.config.challenge.timerMinutes)
+      setChExempt(state.config.challenge.exemptMinutes)
       setPanicMin(state.config.panic.minutes)
       setPanicMantra(state.config.panic.mantra)
       setPanicBrowsers(state.config.panic.blockBrowsers)
@@ -438,14 +441,15 @@ export default function App(): JSX.Element {
             length: chLen,
             wordCount: chWords,
             customText: chCustom,
-            timerMinutes: chTimer
+            timerMinutes: chTimer,
+            exemptMinutes: chExempt
           },
           token
         ) as Promise<ProtectedResult>,
       'Changing the unlock challenge'
     )
     if (ok) flash('Challenge settings saved.')
-  }, [chType, chLen, chWords, chCustom, chTimer, protectedCall, flash])
+  }, [chType, chLen, chWords, chCustom, chTimer, chExempt, protectedCall, flash])
 
   const quit = useCallback(
     () =>
@@ -513,15 +517,30 @@ export default function App(): JSX.Element {
   }, [runChallenge])
 
   const unlockBlocked = useCallback(async () => {
+    const target = blockedApp
     setBlockedApp(null) // close the takeover first, else the challenge renders behind it
+    if (!target) return
     const c = await window.api.startChallenge()
-    await runChallenge(c, 'Unlocking anyway')
-  }, [runChallenge])
+    const token = await runChallenge(c, `Unlocking ${target.pretty}`)
+    if (!token) return
+    const res = await window.api.exemptApp(target.raw, token)
+    if (res?.ok) {
+      flash(
+        `${target.pretty} unlocked for ${res.minutes ?? 15} minutes — this breaks today's streak.`
+      )
+    } else {
+      flash(res?.error || 'Unlock failed — try again.')
+    }
+    await refresh()
+  }, [blockedApp, runChallenge, flash, refresh])
 
   useEffect(() => window.api.onQuitRequested(() => void quit()), [quit])
 
   // The engine pushes this when it catches a blocked app — show the lockout takeover for real.
-  useEffect(() => window.api.onAppBlocked((name) => setBlockedApp(prettyName(name))), [])
+  useEffect(
+    () => window.api.onAppBlocked((name) => setBlockedApp({ raw: name, pretty: prettyName(name) })),
+    []
+  )
 
   // Main pushes this each morning — refresh so the commitment overlay surfaces promptly.
   useEffect(() => window.api.onCommitmentDue(() => void refresh()), [refresh])
@@ -626,6 +645,16 @@ export default function App(): JSX.Element {
     [state]
   )
 
+  // Whole minutes left on an active unlock exemption (0 = not exempt). `now` ticks every
+  // second, so the chip counts down live.
+  const exemptMinutesLeft = useCallback(
+    (name: string) => {
+      const until = state?.exemptions?.[name.toLowerCase()] ?? 0
+      return Math.max(0, Math.ceil((until - now.getTime()) / 60_000))
+    },
+    [state, now]
+  )
+
   if (!state || !draft) {
     return <div className="loading">Loading Spawncamp…</div>
   }
@@ -661,7 +690,8 @@ export default function App(): JSX.Element {
     chLen !== config.challenge.length ||
     chWords !== config.challenge.wordCount ||
     chCustom !== config.challenge.customText ||
-    chTimer !== config.challenge.timerMinutes
+    chTimer !== config.challenge.timerMinutes ||
+    chExempt !== config.challenge.exemptMinutes
 
   const panicDirty =
     panicMin !== config.panic.minutes ||
@@ -757,6 +787,7 @@ export default function App(): JSX.Element {
             {lockedPreview.map((a) => {
               const b = appBadge(a.name)
               const tag = modeTag(a.mode)
+              const exemptLeft = exemptMinutesLeft(a.name)
               return (
                 <div key={a.name} className="app-row">
                   <div
@@ -766,6 +797,9 @@ export default function App(): JSX.Element {
                     {b.initials}
                   </div>
                   <span className="app-row-name">{prettyName(a.name)}</span>
+                  {exemptLeft > 0 && (
+                    <span className="tag tag-limit">Unlocked · {exemptLeft}m</span>
+                  )}
                   <span className={`tag ${tag.cls}`}>{tag.label}</span>
                 </div>
               )
@@ -845,6 +879,7 @@ export default function App(): JSX.Element {
           const b = appBadge(a.name)
           const limit = a.dailyLimitMinutes ?? 60
           const used = usedMinutes(a.name)
+          const exemptLeft = exemptMinutesLeft(a.name)
           const hint =
             a.mode === 'always'
               ? 'Blocked 24/7'
@@ -861,7 +896,14 @@ export default function App(): JSX.Element {
                   {b.initials}
                 </div>
                 <div className="block-item-main">
-                  <div className="block-item-name">{prettyName(a.name)}</div>
+                  <div className="block-item-name">
+                    {prettyName(a.name)}
+                    {exemptLeft > 0 && (
+                      <span className="tag tag-limit" style={{ marginLeft: 8 }}>
+                        Unlocked · {exemptLeft}m left
+                      </span>
+                    )}
+                  </div>
                   <div className="block-item-hint">{hint}</div>
                 </div>
                 <div className="block-item-controls">
@@ -1429,6 +1471,21 @@ export default function App(): JSX.Element {
             </div>
           )}
 
+          <div className="divider" />
+          <div className="inline-row">
+            <input
+              className="field mini"
+              type="number"
+              min={5}
+              max={60}
+              value={chExempt}
+              onChange={(e) => setChExempt(Number(e.target.value))}
+            />
+            <span className="inline-label">
+              minutes of access after completing the challenge (also resets your streak)
+            </span>
+          </div>
+
           <div className="sched-footer" style={{ marginTop: 14 }}>
             <span />
             <button className="btn accent" disabled={!chDirty} onClick={() => void saveChallenge()}>
@@ -1744,6 +1801,7 @@ export default function App(): JSX.Element {
         <Lockout
           appName={config.blocklist[0]?.name ? prettyName(config.blocklist[0].name) : 'Steam'}
           streak={streak}
+          exemptMinutes={config.challenge.exemptMinutes}
           onClose={() => setLockoutPreview(false)}
           onUnlock={() => void previewUnlock()}
         />
@@ -1751,9 +1809,10 @@ export default function App(): JSX.Element {
 
       {blockedApp && (
         <Lockout
-          key={blockedApp}
-          appName={blockedApp}
+          key={blockedApp.raw}
+          appName={blockedApp.pretty}
           streak={streak}
+          exemptMinutes={config.challenge.exemptMinutes}
           onClose={() => setBlockedApp(null)}
           onUnlock={() => void unlockBlocked()}
         />

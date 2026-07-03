@@ -38,6 +38,72 @@ export function isPaused(): boolean {
   return paused
 }
 
+// ---- Temporary exemptions (earned by completing the unlock challenge) ----
+// Lowercased exe name -> expiry epoch ms. Persisted so an app crash/restart
+// doesn't cut a granted break short. Panic ignores this map entirely.
+let exemptionsPath = ''
+let exemptions: Record<string, number> = {}
+
+function initExemptions(): void {
+  exemptionsPath = join(app.getPath('userData'), 'exemptions.json')
+  try {
+    if (existsSync(exemptionsPath)) {
+      let text = readFileSync(exemptionsPath, 'utf-8')
+      if (text.charCodeAt(0) === 0xfeff) text = text.slice(1)
+      const raw = JSON.parse(text)
+      if (raw && typeof raw === 'object') {
+        for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+          const until = Number(v)
+          if (until > Date.now()) exemptions[k.toLowerCase()] = until
+        }
+      }
+    }
+  } catch (e) {
+    console.error('[engine] failed to read exemptions:', e)
+  }
+}
+
+function persistExemptions(): void {
+  try {
+    writeFileSync(exemptionsPath, JSON.stringify(exemptions), 'utf-8')
+  } catch (e) {
+    console.error('[engine] failed to write exemptions:', e)
+  }
+}
+
+/** Grant `name` a temporary pass from blocking. Overwrites any shorter existing pass. */
+export function exemptApp(name: string, minutes: number): void {
+  const key = name.toLowerCase()
+  exemptions[key] = Date.now() + minutes * 60_000
+  persistExemptions()
+  console.log('[engine] exempted', key, 'for', minutes, 'min')
+}
+
+function isExempt(key: string): boolean {
+  return (exemptions[key] ?? 0) > Date.now()
+}
+
+/** Drop expired exemptions and re-arm the lockout so the next launch pops the takeover. */
+function purgeExemptions(): void {
+  const now = Date.now()
+  let changed = false
+  for (const key of Object.keys(exemptions)) {
+    if (exemptions[key] <= now) {
+      delete exemptions[key]
+      lockoutArmed[key] = true
+      changed = true
+      console.log('[engine] exemption expired for', key)
+    }
+  }
+  if (changed) persistExemptions()
+}
+
+/** Active exemptions (lowercased exe -> expiry epoch ms) — for the UI countdowns. */
+export function getExemptions(): Record<string, number> {
+  purgeExemptions()
+  return { ...exemptions }
+}
+
 // ---- Daily usage tracking (for budget mode) ----
 let usagePath = ''
 let usage: { date: string; seconds: Record<string, number> } = { date: '', seconds: {} }
@@ -281,6 +347,7 @@ async function tick(): Promise<void> {
   if (!panicActive && cfg.blocklist.length === 0 && (cfg.folderBlocks?.length ?? 0) === 0) return
 
   rollUsageDate()
+  purgeExemptions()
   const schedActive = getStatus(cfg.schedule, cfg.scheduleEnabled, new Date()).active
 
   // Map running processes by lowercased name -> pids.
@@ -331,6 +398,9 @@ async function tick(): Promise<void> {
       }
     }
 
+    // An earned exemption suspends the kill — but never during panic.
+    if (shouldKill && !panicActive && isExempt(key)) shouldKill = false
+
     if (shouldKill && pids) {
       for (const pid of pids) {
         await killByPid(pid)
@@ -371,6 +441,10 @@ async function tick(): Promise<void> {
       const withPaths = await listProcessesWithPaths()
       for (const p of withPaths) {
         const lp = p.path.toLowerCase()
+        // Folder-caught apps honor exemptions by exe name too (matches the lockout's
+        // unlock flow, which only knows the exe name). Panic still kills everything.
+        const exeKey = (lp.split(/[\\/]/).pop() ?? '').trim()
+        if (!panicActive && exeKey && isExempt(exeKey)) continue
         if (activeFolders.some((f) => lp.startsWith(f + '\\'))) {
           await killByPid(p.pid)
           killLog.push({
@@ -399,6 +473,7 @@ export function startEngine(): void {
   if (timer) return
   initUsage()
   initPanic()
+  initExemptions()
   initStats()
   void tick()
   timer = setInterval(() => {

@@ -6,6 +6,8 @@ interface Props {
   appName: string
   /** Current day streak, woven into the body copy. */
   streak: number
+  /** Minutes of access a completed challenge grants (from Settings → Unlock challenge). */
+  exemptMinutes: number
   onClose: () => void
   onUnlock: () => void
 }
@@ -15,7 +17,7 @@ interface Props {
  * doesn't go straight to the challenge — it first asks for a deliberate confirmation
  * (a mental interrupt against mindless clicking), then the caller opens the challenge.
  */
-export function Lockout({ appName, streak, onClose, onUnlock }: Props): JSX.Element {
+export function Lockout({ appName, streak, exemptMinutes, onClose, onUnlock }: Props): JSX.Element {
   const [confirming, setConfirming] = useState(false)
 
   return (
@@ -30,8 +32,9 @@ export function Lockout({ appName, streak, onClose, onUnlock }: Props): JSX.Elem
           <>
             <div className="lockout-headline">Are you sure?</div>
             <p className="lockout-body">
-              No pressure — just making sure this isn’t a decision you’ll end up regretting later.
-              Click continue to begin your unlock challenge.
+              Continuing opens the unlock challenge. Completing it gives you{' '}
+              <strong>{exemptMinutes} minutes</strong> of access to {appName} —{' '}
+              <strong>and resets your streak</strong>.
             </p>
             <div className="lockout-actions">
               <button className="btn accent" onClick={onClose}>

@@ -63,6 +63,12 @@ const api = {
     ipcRenderer.invoke('verify-challenge', id, typed) as Promise<{ ok: boolean; token?: string }>,
   claimTimer: (id: string) =>
     ipcRenderer.invoke('claim-timer', id) as Promise<{ ok: boolean; token?: string }>,
+  exemptApp: (name: string, token?: string) =>
+    ipcRenderer.invoke('exempt-app', name, token) as Promise<{
+      ok: boolean
+      minutes?: number
+      error?: string
+    }>,
 
   removeApp: (name: string, token?: string) =>
     ipcRenderer.invoke('remove-app', name, token),
@@ -75,6 +81,7 @@ const api = {
       wordCount?: number
       customText?: string
       timerMinutes?: number
+      exemptMinutes?: number
     },
     token?: string
   ) => ipcRenderer.invoke('set-challenge', challenge, token),

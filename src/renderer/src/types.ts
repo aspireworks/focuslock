@@ -21,6 +21,8 @@ export interface ChallengeConfig {
   wordCount: number
   customText: string
   timerMinutes: number
+  /** Minutes of access a completed unlock challenge grants (5–60). */
+  exemptMinutes: number
 }
 
 export interface FolderRule {
@@ -98,6 +100,8 @@ export interface AppState {
   paused: boolean
   usage: Usage
   panic: { active: boolean; until: number }
+  /** Active unlock exemptions: lowercased exe name -> expiry epoch ms. */
+  exemptions: Record<string, number>
   stats: StatsView
   /** True when today's commitment is due and not yet done (drives the morning overlay). */
   commitmentDue: boolean
