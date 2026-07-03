@@ -280,7 +280,13 @@ strengthens). The old instant toggle survives only in dev builds
 
 ---
 
-### 2.2 `[ ]` Disable DevTools and menu accelerators in packaged builds (audit B3)
+### 2.2 `[x]` Disable DevTools and menu accelerators in packaged builds (audit B3)
+
+**Status:** Done 2026-07-03, commit `03756d5`. Verified on a real packaged
+build (`electron-builder --dir` → `dist/win-unpacked/Spawncamp.exe`):
+`isPackaged` true, application menu null, Ctrl+Shift+I opens nothing,
+Ctrl+R doesn't reload (canary input survived), and Ctrl+V paste still works
+in text fields — so the no-menu fallback from step 3 wasn't needed.
 
 **Problem:** Ctrl+Shift+I opens DevTools in production; from the console,
 `window.api.setPaused(true)` (or any protected call) is one line away.
