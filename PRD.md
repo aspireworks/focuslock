@@ -56,7 +56,17 @@ Unlock challenge). It counts as a lapse (breaks the streak) — the honest cost.
 
 ---
 
-### 1.2 `[ ]` Guardrails on blockable folders and processes (audit A2)
+### 1.2 `[x]` Guardrails on blockable folders and processes (audit A2)
+
+**Status:** Done 2026-07-03, commit `704eac3`. Verified live: adding
+`explorer.exe` from the Apps tab shows the error toast and adds nothing; `C:\`,
+`C:\Windows`, `C:\Windows\System32`, `C:\Program Files`, and `%USERPROFILE%`
+are all rejected through the real IPC path while `C:\Program Files\SomeGame`
+is accepted; the running-apps picker lists no protected processes. 7 unit
+tests pass via the new `npm test` (node:test, runs the TS directly on Node
+22). Deviations (all stricter than spec): subfolders *inside* `%WINDIR%` and
+ancestors of `%USERPROFILE%` (e.g. `C:\Users`) are also refused; bare `C:`
+(drive-relative form) is treated as a drive root.
 
 **Problem:** Blocking `C:\` or `C:\Windows` kills every user process — including
 Windows Explorer and Spawncamp itself. The running-apps picker also lets users
