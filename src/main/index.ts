@@ -12,7 +12,8 @@ import { initLogger } from './logger'
 // (a known Electron flakiness) from taking down the blocker.
 app.disableHardwareAcceleration()
 // Needed for Windows toast notifications to display with the app's identity.
-app.setAppUserModelId('Spawncamp')
+// Must match electron-builder's appId, or toasts silently vanish on installed builds.
+app.setAppUserModelId('com.spawncamp.app')
 
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null

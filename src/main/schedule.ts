@@ -48,6 +48,9 @@ export interface BlockStatus {
 /**
  * Whether blocking should be active for the given moment.
  * Ranges are same-day only; a range with end <= start is ignored as invalid.
+ * An end of "23:59" means end-of-day (minute 1440) — nobody who types 23:59
+ * means "except the last minute", and the everyday preset must not leave a
+ * nightly one-minute hole.
  */
 export function isActiveAt(schedule: Schedule, date: Date): boolean {
   const day = String(date.getDay())
@@ -55,7 +58,7 @@ export function isActiveAt(schedule: Schedule, date: Date): boolean {
   const ranges = schedule[day] ?? []
   return ranges.some((r) => {
     const s = toMinutes(r.start)
-    const e = toMinutes(r.end)
+    const e = r.end === '23:59' ? 1440 : toMinutes(r.end)
     return e > s && minutes >= s && minutes < e
   })
 }

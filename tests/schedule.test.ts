@@ -50,6 +50,16 @@ test('isActiveAt basic in/out of range', () => {
   assert.ok(!isActiveAt(s, new Date(2026, 5, 28, 10, 30))) // Sunday
 })
 
+test('an end of 23:59 covers the last minute of the day (everyday preset)', () => {
+  const everyday: Schedule = {}
+  for (let d = 0; d <= 6; d++) everyday[String(d)] = [{ start: '00:00', end: '23:59' }]
+  assert.ok(isActiveAt(everyday, new Date(2026, 5, 29, 23, 59, 30)))
+  assert.ok(isActiveAt(everyday, new Date(2026, 5, 29, 0, 0, 0)))
+  // A non-23:59 end is still exclusive.
+  const s: Schedule = { '1': [{ start: '09:00', end: '17:00' }] }
+  assert.ok(!isActiveAt(s, new Date(2026, 5, 29, 17, 0)))
+})
+
 test('getStatus never throws on a hostile schedule object', () => {
   const garbage = { '1': 'garbage' } as unknown as Schedule
   assert.deepEqual(getStatus(garbage, true, monday1030), { active: false, nextChange: null })

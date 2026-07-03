@@ -28,7 +28,8 @@ import {
   isPaused,
   listRunningApps,
   setPaused,
-  startPanic
+  startPanic,
+  stopEngine
 } from './engine'
 import {
   claimTimer,
@@ -481,6 +482,7 @@ export function registerIpc(): void {
   ipcMain.handle('request-quit', (_e, token?: string): ProtectedResult => {
     if (getConfig().protectionEnabled) return fail() // turn off protection first
     if (!authorize(token)) return fail()
+    stopEngine() // flush buffered usage/stats before exiting (mirrors the tray-quit path)
     app.exit(0)
     return { ok: true }
   })

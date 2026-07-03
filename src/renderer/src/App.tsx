@@ -20,6 +20,7 @@ import {
 import {
   DAY_LABELS,
   dedupeRanges,
+  endMinutes,
   toMinutes,
   type AppState,
   type BlockedApp,
@@ -607,7 +608,7 @@ export default function App(): JSX.Element {
   }, [])
 
   const applyQuickAdd = useCallback(() => {
-    if (toMinutes(qaEnd) <= toMinutes(qaStart)) {
+    if (endMinutes(qaEnd) <= toMinutes(qaStart)) {
       flash('End time must be after start.')
       return
     }
@@ -1173,7 +1174,7 @@ export default function App(): JSX.Element {
                       <div className="custom-day-label">{DAY_LABELS[day]}</div>
                       <div className="custom-ranges">
                         {ranges.map((r, i) => {
-                          const invalid = toMinutes(r.end) <= toMinutes(r.start)
+                          const invalid = endMinutes(r.end) <= toMinutes(r.start)
                           return (
                             <div
                               key={i}

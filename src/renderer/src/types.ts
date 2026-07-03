@@ -117,6 +117,11 @@ export function toMinutes(hhmm: string): number {
   return (h || 0) * 60 + (m || 0)
 }
 
+/** Minutes for a range END. "23:59" means end-of-day (1440) — mirrors the engine's rule. */
+export function endMinutes(hhmm: string): number {
+  return hhmm === '23:59' ? 1440 : toMinutes(hhmm)
+}
+
 /** Remove exact duplicate ranges and sort by start. Invalid ranges are kept (flagged in the UI). */
 export function dedupeRanges(ranges: TimeRange[]): TimeRange[] {
   const seen = new Set<string>()
