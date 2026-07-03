@@ -15,6 +15,38 @@
 
 ---
 
+## ⏳ Outstanding — Connor's action items (as of 2026-07-03)
+
+Everything automatable in Phases 1–3 is done (see Status lines below). These
+remaining items need Connor personally; each blocks the v1.0 release gate
+except where noted. Update this section as items complete.
+
+1. **Start Azure Trusted Signing signup (3.2) — do this first.** Azure
+   account → "Trusted Signing" resource → individual identity validation
+   (needs government ID, takes days — it's the long pole). Fallback if it
+   stalls: OV certificate from SSL.com/Sectigo (~$100–250/yr).
+2. **Create the empty public repo `github.com/aspireworks/spawncamp-releases` (3.3).**
+   The app's updater already points at it. Once it exists, run the full
+   update-loop test (1.0.0 → 1.0.1 draft release) — a future Claude session
+   can do the test part.
+3. **Confirm the first GitHub Actions run is green (3.6).** Code is pushed;
+   check the Actions tab on `aspireworks/focuslock`. Green run → flip 3.6 to `[x]`.
+4. **Buy the domain (3.5)** — e.g. `spawncamp.app` — *before* first release
+   (appId `com.spawncamp.app` is painful to change later). Also do a direct
+   USPTO TESS search for "Spawncamp" (web search found no conflicts) and
+   decide the support email (currently `connor.d@mindmaven.com` in `ipc.ts`).
+5. **Manual UAC QA (1.3 / 1.6):** add a site and *decline* the admin prompt →
+   error toast, site not saved; decline during onboarding → warning screen +
+   Websites-tab retry banner; retry + accept applies all sites in one prompt.
+6. **Clean-VM release QA (3.7):** run the full matrix in section 3.7 on the
+   release candidate — includes the installed-build toast check (1.7), the
+   kill-tree re-arm (2.4), full uninstall cleanup with sites blocked (3.1),
+   and the update path (3.3).
+
+*(Post-gate, not blocking: Phases 4–5.)*
+
+---
+
 ## Phase 1 — Correctness & safety bugs
 
 These are actual defects. Fix in order; each is small and self-contained.
