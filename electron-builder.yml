@@ -8,6 +8,11 @@ files:
   - out/**
   - resources/**
   - package.json
+# Docs shipped next to the app (outside the asar) so Settings can open them.
+extraResources:
+  - PRIVACY.md
+  - THIRD-PARTY-NOTICES.md
+  - LICENSE.md
 win:
   icon: build/icon.png
   target:

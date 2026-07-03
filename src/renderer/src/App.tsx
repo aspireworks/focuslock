@@ -1714,6 +1714,15 @@ export default function App(): JSX.Element {
           <button className="btn ghost" onClick={() => void window.api.openLogs()}>
             Open logs
           </button>
+          <button className="btn ghost" onClick={() => void window.api.openDoc('PRIVACY.md')}>
+            Privacy
+          </button>
+          <button
+            className="btn ghost"
+            onClick={() => void window.api.openDoc('THIRD-PARTY-NOTICES.md')}
+          >
+            Licenses
+          </button>
           <span className="version">Spawncamp v{version}</span>
         </div>
       </div>

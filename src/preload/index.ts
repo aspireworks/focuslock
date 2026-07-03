@@ -24,6 +24,8 @@ const api = {
   setBlockMessage: (text: string) => ipcRenderer.invoke('set-block-message', text),
   setName: (name: string) => ipcRenderer.invoke('set-name', name),
   openLogs: () => ipcRenderer.invoke('open-logs'),
+  openDoc: (name: 'PRIVACY.md' | 'THIRD-PARTY-NOTICES.md' | 'LICENSE.md') =>
+    ipcRenderer.invoke('open-doc', name),
   sendFeedback: () => ipcRenderer.invoke('send-feedback'),
   completeOnboarding: (payload: {
     name: string

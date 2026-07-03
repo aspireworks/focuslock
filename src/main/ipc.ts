@@ -1,4 +1,5 @@
 import { app, dialog, ipcMain, shell } from 'electron'
+import { join } from 'path'
 import { getLogsDir } from './logger'
 import { getStats, recordLapse } from './stats'
 
@@ -107,6 +108,16 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle('open-logs', () => shell.openPath(getLogsDir()))
+
+  // Bundled docs (privacy, third-party notices). Packaged: next to the asar via
+  // extraResources; dev: the repo root.
+  ipcMain.handle('open-doc', (_e, name: string) => {
+    const allowed = new Set(['PRIVACY.md', 'THIRD-PARTY-NOTICES.md', 'LICENSE.md'])
+    const file = String(name)
+    if (!allowed.has(file)) return false
+    const base = app.isPackaged ? process.resourcesPath : app.getAppPath()
+    return shell.openPath(join(base, file))
+  })
 
   ipcMain.handle('send-feedback', () => {
     const subject = encodeURIComponent(`Spawncamp feedback (v${app.getVersion()})`)

@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "A Cold Turkey-style app blocker: scheduled blocking with a timed typing challenge.",
   "author": "Connor",
+  "license": "SEE LICENSE IN LICENSE.md",
   "private": true,
   "main": "./out/main/index.js",
   "scripts": {
