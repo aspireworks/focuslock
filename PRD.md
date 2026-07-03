@@ -357,7 +357,17 @@ inside the 3-second heartbeat window, and nothing brings Spawncamp back.
 
 ---
 
-### 2.5 `[ ]` Strict mode — optional "settings locked at all times" (audit B-5/6)
+### 2.5 `[x]` Strict mode — optional "settings locked at all times" (audit B-5/6)
+
+**Status:** Done 2026-07-03, commit `8c90f3f`. Verified live: with strict on
+and *nothing* enforcing, removing an app demanded (and honored) the challenge;
+Pause is disabled with the tooltip; turning strict off was challenge-gated and
+left `strictModeOffAt` = tomorrow with "ends tonight at midnight" shown;
+"Keep on" cancelled the pending switch-off for free; simulating the day
+boundary (offAt = today + restart) flipped strict off within a few engine
+ticks and re-enabled Pause. The flip runs at the top of `tick()` (before its
+early returns), not on the commitment scheduler as the spec suggested — the
+tick runs even when the commitment ritual is disabled.
 
 **Problem:** Outside active hours, every protective edit is free — a 2 a.m.
 urge (outside a 9–5 schedule) can dismantle tomorrow's blocks without friction.
