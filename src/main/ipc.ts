@@ -43,7 +43,13 @@ import { detectGames } from './games'
 import { isTampered } from './integrity'
 import { isDangerousFolder, normalizeExeName, PROTECTED_PROCESSES } from './safety'
 import { applyHosts, normalizeDomain } from './websites'
-import { applyAutostart, startWatchdog, stopWatchdog } from './watchdog'
+import {
+  applyAutostart,
+  installGuardTask,
+  removeGuardTask,
+  startWatchdog,
+  stopWatchdog
+} from './watchdog'
 
 interface ProtectedResult {
   ok: boolean
@@ -341,8 +347,13 @@ export function registerIpc(): void {
     if (turningOff) recordLapse() // dropping protection taints today's streak
     updateConfig({ protectionEnabled: !!enabled })
     applyAutostart(!!enabled)
-    if (enabled) startWatchdog()
-    else stopWatchdog()
+    if (enabled) {
+      startWatchdog()
+      installGuardTask()
+    } else {
+      stopWatchdog()
+      removeGuardTask()
+    }
     return { ok: true, config: getConfig() }
   })
 

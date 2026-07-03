@@ -1,5 +1,5 @@
 import { app } from 'electron'
-import { spawn } from 'child_process'
+import { exec, spawn } from 'child_process'
 import { readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
 
@@ -36,7 +36,10 @@ function protectionOn(): boolean {
   try {
     let t = readFileSync(configFile(), 'utf-8')
     if (t.charCodeAt(0) === 0xfeff) t = t.slice(1)
-    return JSON.parse(t).protectionEnabled === true
+    const raw = JSON.parse(t)
+    // Signed shape { config, sig } since 2.3; fall back to the legacy flat shape.
+    const cfg = raw && typeof raw === 'object' && 'config' in raw ? raw.config : raw
+    return cfg?.protectionEnabled === true
   } catch {
     return false
   }
@@ -75,6 +78,30 @@ export function stopWatchdog(): void {
   }
 }
 
+// ---- Scheduled-task re-arm (survives "End process tree") ----
+// A per-user schtasks entry (no admin needed) relaunches Spawncamp every minute.
+// While the app runs, the fired instance hits the single-instance lock and exits;
+// --from-task keeps both that and a cold re-arm start silent (hidden to tray).
+const GUARD_TASK = 'SpawncampGuard'
+
+export function installGuardTask(): void {
+  if (!app.isPackaged) return // dev execPath is electron.exe — never register that
+  const cmd = `schtasks /Create /F /SC MINUTE /MO 1 /TN "${GUARD_TASK}" /TR "\\"${process.execPath}\\" --from-task"`
+  exec(cmd, { windowsHide: true }, (e) => {
+    if (e) console.error('[watchdog] guard task install failed:', e)
+    else console.log('[watchdog] guard task installed')
+  })
+}
+
+export function removeGuardTask(): void {
+  if (!app.isPackaged) return
+  exec(`schtasks /Delete /F /TN "${GUARD_TASK}"`, { windowsHide: true }, (e) => {
+    // "task not found" is fine — treat any other failure as log-worthy.
+    if (e && !/ERROR:/i.test(String(e.message))) console.error('[watchdog] guard task remove failed:', e)
+    else console.log('[watchdog] guard task removed (or was absent)')
+  })
+}
+
 /** Run on login. Only meaningful for the installed exe (dev execPath is electron.exe). */
 export function applyAutostart(enabled: boolean): void {
   if (!app.isPackaged) return
@@ -102,7 +129,7 @@ export function startGuardianLoop(): void {
     writeStamp(guardianHb())
     if (!fresh(mainHb())) {
       console.log('[watchdog] main is gone — relaunching')
-      spawnDetached([])
+      spawnDetached(['--from-task']) // relaunch to the tray without stealing focus
     }
   }, HEARTBEAT_MS)
 }

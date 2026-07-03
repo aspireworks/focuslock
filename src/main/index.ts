@@ -7,7 +7,13 @@ import { isTampered } from './integrity'
 import { recordLapse } from './stats'
 import { startCommitmentScheduler } from './commitment'
 import { registerIpc } from './ipc'
-import { applyAutostart, startGuardianLoop, startWatchdog } from './watchdog'
+import {
+  applyAutostart,
+  installGuardTask,
+  removeGuardTask,
+  startGuardianLoop,
+  startWatchdog
+} from './watchdog'
 import { initLogger } from './logger'
 
 // A simple form UI doesn't need the GPU. Disabling it avoids GPU-process crashes
@@ -21,6 +27,9 @@ let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 
 const isGuardian = process.argv.includes('--watchdog')
+// Launched by the SpawncampGuard scheduled task (or a guardian relaunch): start
+// to the tray without showing (or focusing) the window.
+const fromTask = process.argv.includes('--from-task')
 
 if (isGuardian) {
   // Lightweight guardian: no window, no engine — just relaunch the main app if it dies.
@@ -34,7 +43,12 @@ if (isGuardian) {
   if (!gotLock) {
     app.quit()
   } else {
-    app.on('second-instance', showWindow)
+    // The guard task fires every minute even while we're running; that instance
+    // exits on the lock above, and its --from-task argv means we must NOT pop
+    // the window each minute. Genuine second launches still surface the window.
+    app.on('second-instance', (_e, argv) => {
+      if (!argv.includes('--from-task')) showWindow()
+    })
 
     app.whenReady().then(() => {
       initLogger('main')
@@ -58,10 +72,16 @@ if (isGuardian) {
         showWindow()
         mainWindow.webContents.send('commitment-due')
       })
-      // Stay-on protection: run-on-boot + watchdog when enabled.
+      // Stay-on protection: run-on-boot + watchdog + guard task when enabled.
+      // The task state is re-asserted every boot so it always matches config.
       const cfg = getConfig()
       applyAutostart(cfg.protectionEnabled)
-      if (cfg.protectionEnabled) startWatchdog()
+      if (cfg.protectionEnabled) {
+        startWatchdog()
+        installGuardTask()
+      } else {
+        removeGuardTask()
+      }
     })
 
     // Keep running in the tray even when the window is closed.
@@ -86,12 +106,17 @@ function createWindow(): void {
     autoHideMenuBar: true,
     backgroundColor: '#0f1117',
     icon: trayIcon,
+    show: false, // shown on ready-to-show below, unless this is a silent --from-task start
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
       contextIsolation: true,
       devTools: !app.isPackaged
     }
+  })
+
+  mainWindow.once('ready-to-show', () => {
+    if (!fromTask) mainWindow?.show()
   })
 
   // X button hides to tray instead of quitting.
