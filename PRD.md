@@ -180,7 +180,11 @@ with "You're set" and the user falsely believes their sites are blocked.
 
 ---
 
-### 1.7 `[ ]` Fix the AppUserModelId mismatch so toasts work when installed (audit A7)
+### 1.7 `[x]` Fix the AppUserModelId mismatch so toasts work when installed (audit A7)
+
+**Status:** Done 2026-07-03, commit `d74c0f3`. One-line change; matches
+`electron-builder.yml` `appId`. The "toast appears on an installed build"
+check remains for 3.7 QA (needs a packaged install on a clean VM).
 
 **Problem:** `app.setAppUserModelId('Spawncamp')` (`src/main/index.ts:15`)
 doesn't match the installer's `appId` `com.spawncamp.app`. Windows ties toast
@@ -195,7 +199,12 @@ silently never appear on installed builds.
 
 ---
 
-### 1.8 `[ ]` Close the 23:59 midnight gap (audit B6)
+### 1.8 `[x]` Close the 23:59 midnight gap (audit B6)
+
+**Status:** Done 2026-07-03, commit `d74c0f3`. Engine rule in `isActiveAt`;
+renderer mirrors it via a new `endMinutes()` helper used by the range-validity
+checks (so a 23:59–23:59 style edge can't disagree between UI and engine).
+Unit-tested: everyday preset active at 23:59:30, ordinary ends still exclusive.
 
 **Problem:** Schedule ranges are end-exclusive, so the "Every day" preset
 (00:00–23:59) leaves 23:59–00:00 unblocked — one free minute per day, and a
@@ -214,7 +223,12 @@ This is a pragmatic interpretation: nobody who sets an end of 23:59 means
 
 ---
 
-### 1.9 `[ ]` Flush stats/usage on authorized quit (micro-fix found during audit)
+### 1.9 `[x]` Flush stats/usage on authorized quit (micro-fix found during audit)
+
+**Status:** Done 2026-07-03, commit `d74c0f3`. Verified live: with a
+budget-mode app accruing usage, quitting via request-quit after ~6s (before
+the periodic persist) wrote 4.5s of usage to disk; before the fix the file
+was empty at that point.
 
 **Problem:** `ipc.ts` → `request-quit` calls `app.exit(0)` directly, skipping
 `stopEngine()` — up to ~12s of buffered usage/stats writes are lost on a normal quit.
