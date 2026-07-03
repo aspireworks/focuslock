@@ -330,7 +330,17 @@ plus a visible notice — the same social cost as any other lapse.
 
 ---
 
-### 2.4 `[ ]` Scheduled-task re-arm — survive "End process tree" (audit B5)
+### 2.4 `[x]` Scheduled-task re-arm — survive "End process tree" (audit B5)
+
+**Status:** Done 2026-07-03, commit `d877454`. Verified live on the packaged
+build on this machine (not yet a clean VM — repeat in 3.7): with protection ON
+the task installs at boot; `taskkill /F /IM Spawncamp.exe /T` killed
+everything; Spawncamp was back in 2s (next minute boundary), tray-only with no
+visible window; disabling/cleanup removed the task (`schtasks /Query`
+confirms). Deviations: guardian relaunches also pass `--from-task` (silent
+crash-recovery, consistent with the task path); the fix also repaired a 2.3
+regression where the guardian read the old config shape. Steps 5 (uninstall
+cleanup, updater interplay) land with 3.1/3.3 as written.
 
 **Problem:** One Task Manager "End task" on the tree kills main + guardian
 inside the 3-second heartbeat window, and nothing brings Spawncamp back.
