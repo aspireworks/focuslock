@@ -84,6 +84,8 @@ const S: AppState = {
     ],
     weekRuntime: [{ name: 'steam.exe', seconds: 66240 }]
   },
+  tamperNotice: false,
+  update: { state: 'up-to-date', version: '1.0.0' },
   version: '1.0.0'
 }
 
